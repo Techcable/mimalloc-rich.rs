@@ -1,3 +1,6 @@
-[submodule "libs/mimalloc-rich-sys/vendored/mimalloc-v2"]
-	path = libs/mimalloc-rich-sys/vendored/mimalloc-v2
+[submodule "libs/mimalloc-rich-src-v2/mimalloc-v2"]
+	path = libs/mimalloc-rich-src-v2/mimalloc-v2
+	url = https://github.com/microsoft/mimalloc.git
+[submodule "libs/mimalloc-rich-src-v3/mimalloc-v3"]
+	path = libs/mimalloc-rich-src-v3/mimalloc-v3
 	url = https://github.com/microsoft/mimalloc.git

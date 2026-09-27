@@ -14,6 +14,9 @@ Most changes include the relevant [jj](https://jj-vcs.dev) change ids in parens.
 
 ### Changes
 - Rename `mimalloc-rich-sys/override` feature to `mimalloc-rich-sys/override-libc-malloc` (zzxlwnyv)
+- Split vendored sources into own crate (pvvpzosl)
+  - Will reduce download time when there are multiple mimalloc versions.
+  - Will reduces download time when building against a system library (not currently supported)
 
 ## 0.1.0-alpha.0 - 2026-09-28
 Initial release.

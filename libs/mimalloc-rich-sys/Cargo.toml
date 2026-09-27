@@ -3,7 +3,7 @@ name = "mimalloc-rich-sys"
 # This version should stay mostly in sync with the main crate version.
 # We add build tag to indicate what the native library version is.
 # This mirrors libgit2-sys behavior
-version = "0.1.0-alpha.0+2.5.2"
+version.workspace = true
 authors.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -13,22 +13,18 @@ repository.workspace = true
 license.workspace = true
 keywords.workspace = true
 categories.workspace = true
-exclude = [
-    "./mimalloc/doc",
-    "./mimalloc/docs",
-]
-
-[dev-dependencies]
-semver = "1"
 
 [build-dependencies]
 anyhow = "1"
 # If we ever switch from bindgen to manual bindings,
 # use the ctest crate to ensure they match.
 bindgen.workspace = true
-camino = "1"
-cmake.workspace = true
-itertools.workspace = true
+cfg-if = "1"
+
+# vendored code & common build logic
+
+mimalloc-rich-src-build.workspace = true
+mimalloc-rich-src-v2 = { workspace = true, optional = true }
 
 [features]
 default = ["debug-if-debug", "vendored-mimalloc"]
@@ -46,7 +42,7 @@ override-libc-malloc = []
 # Enable support for Address Sanitizer
 # Unlike the valgrind feature, this requires ASAN library to be present
 sanitize-address = []
-# Secure mode,
+# Secure mode
 secure = []
 # Enable the `mi_visit_abandoned` flag at compile time.
 #
@@ -54,11 +50,11 @@ secure = []
 # so may not be fully supported
 unstable-enable-visit-abandoned = []
 # Enable support for valgrind, enabled by default if 'debug' is enabled.
-# Does nothing when valgrind is not,
+# Does nothing when valgrind is not being used
 valgrind = []
-# Statically link against vendored mimalloc
+# Statically link against vendored mimalloc v2
 # Currently, this is the only supported linking option
-vendored-mimalloc = []
+vendored-mimalloc = ["dep:mimalloc-rich-src-v2"]
 
 [lints]
 workspace = true

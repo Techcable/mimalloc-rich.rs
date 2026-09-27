@@ -1,0 +1,32 @@
+[package]
+name = "mimalloc-rich-src-v2"
+# matches the mimalloc version, but with major version 2 => 1 and minor version x100
+# The major version will increase if we change this rust crate in a backwards-incompatible manner.
+# This patch version gives us room to make up to 100 patch releases of our own
+# per upstream mimalloc patch release
+version = "1.5.200"
+authors.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+description = "Builds mimalloc v2 from vendored source code"
+readme.workspace = true
+repository.workspace = true
+license.workspace = true
+keywords.workspace = true
+categories = ["api-bindings", "development-tools::build-utils"]
+exclude = [
+    "mimalloc-v2/doc",
+    "mimalloc-v2/docs",
+]
+
+[dependencies]
+anyhow = "1"
+mimalloc-rich-src-build.workspace = true
+
+[features]
+# unstable: Use the `git` command line to verify the version of the package
+# This only affects the build script
+unstable-verify-version-git = []
+
+[lints]
+workspace = true

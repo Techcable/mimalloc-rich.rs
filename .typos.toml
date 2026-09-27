@@ -2,5 +2,5 @@
 ignore-hidden = false
 extend-exclude = [
     ".git", # needed because we 'ignore-hidden'
-    "libs/mimalloc-rich-sys/vendored/*",
+    "libs/mimalloc-rich-src-v*/mimalloc-*",
 ]

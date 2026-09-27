@@ -4,6 +4,7 @@
 //!
 //! [mimalloc]: https://github.com/microsoft/mimalloc
 #![cfg_attr(not(test), no_std)]
+extern crate alloc;
 
 use core::ffi::c_int;
 use core::fmt::{Display, Formatter};
@@ -40,15 +41,15 @@ pub fn mimalloc_version_str() -> impl Display {
 
 #[cfg(test)]
 mod test {
+    use alloc::string::ToString;
 
     #[test]
-    fn vendored_build_matches() {
+    fn vendored_version_matches() {
         const {
             assert!(cfg!(feature = "vendored-mimalloc"), "build should always be vendored");
         }
-        let crate_version = semver::Version::parse(env!("CARGO_PKG_VERSION")).unwrap();
-        let build_tag = crate_version.build.as_str();
+        let vendored_version = env!("MIMALLOC_VENDORED_VERSION");
         let runtime_version = super::mimalloc_version_str().to_string();
-        assert_eq!(build_tag, &runtime_version);
+        assert_eq!(vendored_version, runtime_version);
     }
 }

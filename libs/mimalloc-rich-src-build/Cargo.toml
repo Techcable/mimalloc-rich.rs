@@ -1,0 +1,21 @@
+[package]
+name = "mimalloc-rich-src-build"
+version.workspace = true
+authors.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+description = "Build code for vendored mimalloc, shared across all versions"
+readme.workspace = true
+repository.workspace = true
+license.workspace = true
+keywords.workspace = true
+categories = ["api-bindings", "development-tools::build-utils"]
+
+[dependencies]
+anyhow = "1"
+cmake.workspace = true
+itertools.workspace = true
+semver = "1"
+
+[lints]
+workspace = true
