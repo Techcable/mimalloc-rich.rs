@@ -1,0 +1,61 @@
+[package]
+name = "mimalloc-rich-sys"
+# This version should stay mostly in sync with the main crate version.
+# We add build tag to indicate what the native library version is.
+# This mirrors libgit2-sys behavior
+version = "0.1.0-alpha.0+2.5.2"
+authors.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+description = "Raw binidngs to the mimalloc library"
+readme.workspace = true
+repository.workspace = true
+license.workspace = true
+keywords = ["allocator", "bindings", "mimalloc", "performance"]
+categories = ["api-bindings", "memory-management", "no-std", "no-std::no-alloc"]
+exclude = [
+    "./mimalloc/doc",
+    "./mimalloc/docs",
+]
+
+[dev-dependencies]
+semver = "1"
+
+[build-dependencies]
+anyhow = "1"
+# If we ever switch from bindgen to manual bindings,
+# use the ctest crate to ensure they match.
+bindgen.workspace = true
+camino = "1"
+cmake.workspace = true
+itertools.workspace = true
+
+[features]
+default = ["debug-if-debug", "vendored-mimalloc"]
+# Enable debug mode unconditionally
+debug = []
+# When debug mode is enabled, perform even more checks
+debug-full = []
+# Enable debug mode whenever cfg(debug_assertions) is enabled
+debug-if-debug = []
+# Override the standard heap allocator (off by default)
+override = []
+# Enable support for Address Sanitizer
+# Unlike the valgrind feature, this requires ASAN library to be present
+sanitize-address = []
+# Secure mode,
+secure = []
+# Enable the `mi_visit_abandoned` flag at compile time.
+#
+# This flag is not documented by mimalloc in its camke file,
+# so may not be fully supported
+unstable-enable-visit-abandoned = []
+# Enable support for valgrind, enabled by default if 'debug' is enabled.
+# Does nothing when valgrind is not,
+valgrind = []
+# Statically link against vendored mimalloc
+# Currently, this is the only supported linking option
+vendored-mimalloc = []
+
+[lints]
+workspace = true

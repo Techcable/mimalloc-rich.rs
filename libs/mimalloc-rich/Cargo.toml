@@ -1,0 +1,44 @@
+[package]
+name = "mimalloc-rich"
+version.workspace = true
+authors.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+description = "High-level bindings to the mimalloc allocator"
+readme.workspace = true
+repository.workspace = true
+license.workspace = true
+keywords = ["allocator", "bindings", "mimalloc", "performance"]
+categories = ["api-bindings", "memory-management", "no-std", "no-std::no-alloc"]
+
+[dependencies]
+# support allocator-api2 v0.2, since that is what hashbrown + bumpalo use
+allocator-api2 = { version = "0.2", default-features = false }
+mimalloc-rich-sys.workspace = true
+thiserror = "2"
+
+[dev-dependencies]
+hashbrown = "0.17"
+
+[build-dependencies]
+rustversion-detect = "0.3"
+
+[features]
+default = ["debug-if-debug", "vendored"]
+# Enable debug mode unconditionally
+debug = ["mimalloc-rich-sys/debug"]
+# Enable debug mode whenever cfg(debug_assertions) is enabled
+debug-if-debug = ["mimalloc-rich-sys/debug-if-debug"]
+# Declare MiMalloc as the #[global_allocator]
+declare-global-allocator = []
+# Performs nightly specific optimizations
+nightly = []
+# Support the nightly allocator api
+nightly-allocator-api = []
+# Statically link against a vendored mimalloc
+#
+# This is currently required by mimalloc-sys-rich
+vendored = ["mimalloc-rich-sys/vendored-mimalloc"]
+
+[lints]
+workspace = true
