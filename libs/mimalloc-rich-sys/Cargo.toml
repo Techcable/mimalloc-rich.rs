@@ -38,8 +38,11 @@ debug = []
 debug-full = []
 # Enable debug mode whenever cfg(debug_assertions) is enabled
 debug-if-debug = []
-# Override the standard heap allocator (off by default)
-override = []
+# Override the C-library malloc function (off by default)
+#
+# For compatibility reasons, it is usually best to leave this off.
+# Instead, set the rust global allocator by enabling `mimalloc-rich/declare-global-allocator`.
+override-libc-malloc = []
 # Enable support for Address Sanitizer
 # Unlike the valgrind feature, this requires ASAN library to be present
 sanitize-address = []

@@ -60,7 +60,7 @@ pub fn main() -> anyhow::Result<()> {
         config.cflag("-DMI_VISIT_ABANDONED");
     }
     config.define("MI_BUILD_SHARED", "OFF"); // not necessary
-    config.define("MI_OVERRIDE", if has_feature("override") { "ON" } else { "OFF" });
+    config.define("MI_OVERRIDE", if has_feature("override-libc-malloc") { "ON" } else { "OFF" });
     let result = config.build();
     // TODO: Use pkg-config instead?
     fn find_mimalloc_libs_dir(base: &Path) -> anyhow::Result<PathBuf> {

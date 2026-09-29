@@ -43,7 +43,7 @@ jobs:
           - "mimalloc-rich/vendored mimalloc-rich/debug-if-debug"
           - "mimalloc-rich/vendored mimalloc-rich/debug mimalloc-rich/declare-global-allocator"
           - "mimalloc-rich/vendored mimalloc-rich/debug-if-debug mimalloc-rich-sys/valgrind"
-          - "mimalloc-rich/vendored mimalloc-rich-sys/override"
+          - "mimalloc-rich/vendored mimalloc-rich-sys/override-libc-malloc"
           - "mimalloc-rich/vendored mimalloc-rich-sys/debug-full"
         rustflags:
           - ""
