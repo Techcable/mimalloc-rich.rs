@@ -12,3 +12,11 @@ Most changes include the relevant [jj](https://jj-vcs.dev) change ids in parens.
 
 ## Unreleased
 
+## 0.1.0-alpha.0 - 2026-09-28
+Initial release.
+
+Code largely taken from [DuckLogic](https://ducklogic.org), but cleaned up for public release.
+
+Uses mimalloc v2.5.2, as v3 wasn't stable when this code was originally written.
+
+Uses allocator-api2 v0.2.* as that is what hashbrown v0.17 and bumpalo v3 both use.
