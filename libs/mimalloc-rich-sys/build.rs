@@ -5,11 +5,13 @@
     reason = "build scripts can freely use stdlib"
 )]
 
+use std::fmt::Display;
 use std::path::PathBuf;
 
-use anyhow::{Context, bail};
+use anyhow::{Context, anyhow, bail};
+use mimalloc_rich_src_build::build::BuiltLibrary;
 use mimalloc_rich_src_build::context::CompilationContext;
-use mimalloc_rich_src_build::options::{DebugCondition, OptionsBuilder};
+use mimalloc_rich_src_build::options::{DebugCondition, Options, OptionsBuilder};
 
 pub fn main() -> anyhow::Result<()> {
     //
@@ -19,6 +21,7 @@ pub fn main() -> anyhow::Result<()> {
         println!("cargo::error=The `vendored-mimalloc` feature is currently required");
         bail!("Missing required features")
     }
+    let vendored_version: Version = Version::detect()?.unwrap_or_default();
 
     let ctx = CompilationContext::cargo_build_script();
     let options = {
@@ -41,16 +44,9 @@ pub fn main() -> anyhow::Result<()> {
             .context("Failed to configure mimalloc build options")?
     };
 
-    let result = ({
-        cfg_if::cfg_if! {
-            if #[cfg(feature = "vendored-mimalloc")] {
-                mimalloc_rich_src_v2::build(&options, &ctx)
-            } else {
-                unreachable!("no vendored version selected")
-            }
-        }
-    })
-    .context("Failed to build vendored mimalloc")?;
+    let result = vendored_version
+        .build_vendored(&options, &ctx)
+        .with_context(|| format!("Failed to build vendored mimalloc {vendored_version}"))?;
 
     println!("cargo::rustc-env=MIMALLOC_VENDORED_VERSION={}", result.mimalloc_version);
     println!("cargo::rustc-link-search=native={}", result.library_dir.display());
@@ -73,6 +69,78 @@ pub fn main() -> anyhow::Result<()> {
         .write_to_file(out_dir.join("mimalloc_bindings.rs"))
         .context("Failed to write bindings")?;
     Ok(())
+}
+
+#[derive(Copy, Clone, Debug, Default)]
+enum Version {
+    #[default]
+    V2 = 2,
+    V3 = 3,
+}
+macro_rules! version_info {
+    ($($version:ident => {
+        vendored_required_feature => $vendored_required_feature:literal,
+        vendored_crate => $vendored_crate:ident,
+    }),+ $(,)?) => {
+        impl Version {
+            const ALL: &[Version] = &[$(Version::$version),*];
+            fn detect() -> anyhow::Result<Option<Self>> {
+                fn force_feature(ver: Version) -> String {
+                    format!("force-mimalloc-{ver}")
+                }
+                let mut matches: Vec<Version> = Vec::new();
+                for &ver in Self::ALL {
+                    if has_feature(&force_feature(ver)) {
+                        matches.push(ver);
+                    }
+                }
+                match matches.len() {
+                    0 => Ok(None),
+                    1 => Ok(Some(matches[0])),
+                    _ => {
+                        let flag_names = matches.iter()
+                            .copied()
+                            .map(force_feature)
+                            .collect::<Vec<_>>();
+                        Err(anyhow!(
+                            "Conflicting feature flags: {}", flag_names.join(", ")
+                        ))
+                    }
+                }
+            }
+            fn build_vendored(self, opts: &Options, ctx: &CompilationContext) -> anyhow::Result<BuiltLibrary> {
+                match self {
+                    $(Version::$version => {
+                        cfg_if::cfg_if! {
+                            if #[cfg(feature = $vendored_required_feature)] {
+                                $vendored_crate::build(opts, ctx)
+                            } else {
+                                panic!(
+                                    "Vendored mimalloc {self} not available unless `feature = {name}` is enabled",
+                                    name = $vendored_required_feature,
+                                )
+                            }
+                        }
+                    },)*
+                }
+            }
+        }
+    }
+}
+version_info! {
+    V2 => {
+        vendored_required_feature => "vendored-mimalloc",
+        vendored_crate => mimalloc_rich_src_v2,
+    },
+    V3 => {
+        vendored_required_feature => "force-mimalloc-v3",
+        vendored_crate => mimalloc_rich_src_v3,
+    }
+}
+impl Display for Version {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(f, "v{}", *self as u32)
+    }
 }
 
 fn var(name: impl AsRef<str>) -> Option<String> {

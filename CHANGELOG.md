@@ -13,6 +13,8 @@ Most changes include the relevant [jj](https://jj-vcs.dev) change ids in parens.
 ## Unreleased
 
 ### Added
+- Support building mimalloc v3 (lnslyosl)
+  - Using this version breaks most of the high-level bindings in `mimalloc-rich`
 - Support allocator-api v0.2, v0.3, and v0.4, all at once (ynxstnuk)
   - Enabled by default with `mimalloc-rich/allocator-api2-all` feature.
 

@@ -33,6 +33,7 @@ itertools = "0.15"
 
 mimalloc-rich-src-build = { path = "libs/mimalloc-rich-src-build", version = "0.1.0-alpha.0" }
 mimalloc-rich-src-v2 = { path = "libs/mimalloc-rich-src-v2", version = "1" }
+mimalloc-rich-src-v3 = { path = "libs/mimalloc-rich-src-v3", version = "1" }
 mimalloc-rich-sys = { path = "libs/mimalloc-rich-sys", version = "0.1.0-alpha.0" }
 
 [workspace.lints.clippy]

@@ -50,11 +50,17 @@ jobs:
           - "mimalloc-rich/vendored mimalloc-rich/allocator-api2-02"
           - "mimalloc-rich/vendored mimalloc-rich/allocator-api2-03"
           - "mimalloc-rich/vendored mimalloc-rich/allocator-api2-04"
+          - "mimalloc-rich/vendored mimalloc-rich/allocator-api2-all mimalloc-rich-sys/force-mimalloc-v2"
         rustflags:
           - ""
         extra_flags:
           - ""
         include:
+          - rust: stable
+            features: "mimalloc-rich-sys/vendored-mimalloc mimalloc-rich-sys/debug-if-debug mimalloc-rich-sys/force-mimalloc-v3"
+            # Right now, mimalloc v3 breaks the high-level bindings
+            # As a result, we have to explicitly disable that crate when we test it
+            extra_flags: "--exclude mimalloc-rich"
           - rust: nightly
             features: "mimalloc-rich/vendored mimalloc-rich/debug mimalloc-rich/declare-global-allocator mimalloc-rich/nightly-allocator-api mimalloc-rich/nightly"
           - rust: nightly

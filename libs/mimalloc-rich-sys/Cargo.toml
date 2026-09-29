@@ -14,6 +14,13 @@ license.workspace = true
 keywords.workspace = true
 categories.workspace = true
 
+[package.metadata.cargo-shear]
+ignored = [
+    # cargo-shear cannot see these usages as they are hidden behind version_info! macro
+    "mimalloc-rich-src-v2",
+    "mimalloc-rich-src-v3",
+]
+
 [build-dependencies]
 anyhow = "1"
 # If we ever switch from bindgen to manual bindings,
@@ -25,6 +32,7 @@ cfg-if = "1"
 
 mimalloc-rich-src-build.workspace = true
 mimalloc-rich-src-v2 = { workspace = true, optional = true }
+mimalloc-rich-src-v3 = { workspace = true, optional = true }
 
 [features]
 default = ["debug-if-debug", "vendored-mimalloc"]
@@ -34,6 +42,10 @@ debug = []
 debug-full = []
 # Enable debug mode whenever cfg(debug_assertions) is enabled
 debug-if-debug = []
+# Force use of mimalloc v2
+force-mimalloc-v2 = []
+# Force use of mimalloc v3
+force-mimalloc-v3 = ["dep:mimalloc-rich-src-v3"]
 # Override the C-library malloc function (off by default)
 #
 # For compatibility reasons, it is usually best to leave this off.
@@ -52,8 +64,10 @@ unstable-enable-visit-abandoned = []
 # Enable support for valgrind, enabled by default if 'debug' is enabled.
 # Does nothing when valgrind is not being used
 valgrind = []
-# Statically link against vendored mimalloc v2
+# Statically link against vendored mimalloc (default version)
+#
 # Currently, this is the only supported linking option
+# TODO: Rename this to `vendored` for consistencty with `mimalloc-rich`
 vendored-mimalloc = ["dep:mimalloc-rich-src-v2"]
 
 [lints]
