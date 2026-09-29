@@ -11,8 +11,8 @@ description = "Raw binidngs to the mimalloc library"
 readme.workspace = true
 repository.workspace = true
 license.workspace = true
-keywords = ["allocator", "bindings", "mimalloc", "performance"]
-categories = ["api-bindings", "memory-management", "no-std", "no-std::no-alloc"]
+keywords.workspace = true
+categories.workspace = true
 exclude = [
     "./mimalloc/doc",
     "./mimalloc/docs",

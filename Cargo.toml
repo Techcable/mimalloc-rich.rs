@@ -14,6 +14,8 @@ rust-version = "1.85"
 readme = "README.md"
 repository = "https://github.com/Techcable/mimalloc-rich.rs"
 license = "MIT OR Apache-2.0"
+keywords = ["allocator", "bindings", "mimalloc", "performance"]
+categories = ["api-bindings", "memory-management", "no-std", "no-std::no-alloc"]
 
 [workspace.dependencies]
 # build tools

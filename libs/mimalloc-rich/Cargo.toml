@@ -8,8 +8,8 @@ description = "High-level bindings to the mimalloc allocator"
 readme.workspace = true
 repository.workspace = true
 license.workspace = true
-keywords = ["allocator", "bindings", "mimalloc", "performance"]
-categories = ["api-bindings", "memory-management", "no-std", "no-std::no-alloc"]
+keywords.workspace = true
+categories.workspace = true
 
 [dependencies]
 # support allocator-api2 v0.2, since that is what hashbrown + bumpalo use
