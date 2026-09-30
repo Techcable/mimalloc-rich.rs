@@ -12,6 +12,10 @@ Most changes include the relevant [jj](https://jj-vcs.dev) change ids in parens.
 
 ## Unreleased
 
+### Added
+- Support allocator-api v0.2, v0.3, and v0.4, all at once (ynxstnuk)
+  - Enabled by default with `mimalloc-rich/allocator-api2-all` feature.
+
 ### Changes
 - Deprecate the MiHeap API, as it will need to be rewritten when mimalloc v3 support is added (mztqvrpx)
 - Rename `mimalloc-rich-sys/override` feature to `mimalloc-rich-sys/override-libc-malloc` (zzxlwnyv)

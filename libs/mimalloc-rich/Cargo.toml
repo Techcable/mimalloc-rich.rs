@@ -11,11 +11,20 @@ license.workspace = true
 keywords.workspace = true
 categories.workspace = true
 
+[[test]]
+name = "hashbrown"
+required-features = ["allocator-api2-02"]
+
 [dependencies]
-# support allocator-api2 v0.2, since that is what hashbrown + bumpalo use
-allocator-api2 = { version = "0.2", default-features = false }
 mimalloc-rich-sys.workspace = true
 thiserror = "2"
+
+# Support all versions of allocator-api2, starting at v0.2
+# These are optional, but enabled default using the `allocator-api2-all` feature.
+
+allocator-api2-02 = { package = "allocator-api2", version = "0.2", default-features = false, optional = true }
+allocator-api2-03 = { package = "allocator-api2", version = "0.3", default-features = false, optional = true }
+allocator-api2-04 = { package = "allocator-api2", version = "0.4", default-features = false, optional = true }
 
 [dev-dependencies]
 hashbrown = "0.17"
@@ -24,7 +33,9 @@ hashbrown = "0.17"
 rustversion-detect = "0.3"
 
 [features]
-default = ["debug-if-debug", "vendored"]
+default = ["allocator-api2-all", "debug-if-debug", "vendored"]
+# Enable all supported version of allocator-api2
+allocator-api2-all = ["allocator-api2-02", "allocator-api2-03", "allocator-api2-04"]
 # Enable debug mode unconditionally
 debug = ["mimalloc-rich-sys/debug"]
 # Enable debug mode whenever cfg(debug_assertions) is enabled

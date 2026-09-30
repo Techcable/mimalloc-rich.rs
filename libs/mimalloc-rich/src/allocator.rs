@@ -1,15 +1,19 @@
 //! Declares the [`MiMalloc`] type,
 //! which implements [`core::alloc::Allocator`],
-//! [`allocator_api2::alloc::Allocator`],
-//! and [`core::alloc::GlobalAlloc`],
+//! [`core::alloc::GlobalAlloc`],
+//! and [`allocator_api2::alloc::Allocator`].
 //!
-//! Implementing [`core::alloc::Allocator`] requires the `nightly` feature.
+//! Implementing [`core::alloc::Allocator`] requires the `nightly-allocator-api` feature.
+//! Implementing [`allocator_api2::alloc::Allocator`] requires `allocator-api2-all` feature,
+//! which implements the trait for each supported version of `allocator-api2`.
+//!
+//! [`allocator_api2::alloc::Allocator`]: https://docs.rs/allocator-api2/latest/allocator_api2/alloc/trait.Allocator.html
 
 use core::alloc::Layout;
 use core::ffi::c_void;
 use core::ptr::NonNull;
 
-use allocator_api2::alloc::AllocError;
+use crate::internal_alloc_api::{AllocError, impl_public_allocator_traits};
 
 /// Sets mimalloc as the global allocator.
 #[cfg(feature = "declare-global-allocator")]
@@ -33,7 +37,7 @@ impl MiMalloc {
     }
 }
 
-#[deny(clippy::missing_trait_methods)]
+#[cfg_attr(test, deny(clippy::missing_trait_methods))]
 // SAFETY: This is a correct allocator
 unsafe impl core::alloc::GlobalAlloc for MiMalloc {
     /// Allocate memory with the specified size and alignment
@@ -63,14 +67,13 @@ unsafe impl core::alloc::GlobalAlloc for MiMalloc {
     #[inline]
     unsafe fn realloc(&self, ptr: *mut u8, layout: Layout, new_size: usize) -> *mut u8 {
         let _ = layout; // not needed
-        // SAFETY: Validity guaranteed by caller
+        // SAFETY: Validity guaranteed by caller, alignment cannot change as we have only have a `new_size`
         let res = unsafe { crate::mi_realloc(ptr.cast(), new_size) };
         res.map_or(core::ptr::null_mut(), NonNull::as_ptr).cast()
     }
 }
-#[deny(clippy::missing_trait_methods)]
 // SAFETY: This is a correct implementation
-unsafe impl allocator_api2::alloc::Allocator for MiMalloc {
+unsafe impl crate::internal_alloc_api::Allocator for MiMalloc {
     #[inline]
     fn allocate(&self, layout: Layout) -> Result<NonNull<[u8]>, AllocError> {
         let res = crate::mi_malloc_aligned(layout)?;
@@ -117,8 +120,6 @@ unsafe impl allocator_api2::alloc::Allocator for MiMalloc {
         let res = unsafe { crate::mi_realloc_aligned(ptr.as_ptr().cast(), new_layout) }?;
         Ok(self.handle_alloc_res(res, new_layout))
     }
-
-    common_allocator_impl!(@default);
 }
 
-delegate_impl_nightly_allocator!(MiMalloc);
+impl_public_allocator_traits!(impl Allocator for MiMalloc);

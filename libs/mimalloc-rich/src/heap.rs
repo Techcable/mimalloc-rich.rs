@@ -8,9 +8,8 @@ use core::mem::ManuallyDrop;
 use core::ops::ControlFlow;
 use core::ptr::NonNull;
 
-use allocator_api2::alloc::AllocError;
-
 use crate::OutOfMemoryError;
+use crate::internal_alloc_api::{AllocError, impl_public_allocator_traits};
 use crate::subproc::MiSubprocId;
 use crate::sys::{self, mi_heap_t};
 
@@ -172,6 +171,8 @@ impl MiHeap {
     /// Returns [`AllocError`] on out of memory and correctly supports zero-sized allocations.
     ///
     /// Similar to [`crate::mi_malloc_aligned`], but specific to this heap.
+    ///
+    /// [`AllocError`]: core::alloc::AllocError
     ///
     /// ## Safety
     /// Always safe to call.
@@ -413,9 +414,8 @@ impl Debug for MiHeap {
 /// Note that while allocation is specific to a particular heap and thread,
 /// deallocate uses the global [`crate::mi_free`] function and can be called from any thread.
 /// There is no need to remember the original heap it was allocated in.
-#[deny(clippy::missing_trait_methods)]
 // SAFETY: Correctly delegates to mi_heap_t
-unsafe impl allocator_api2::alloc::Allocator for MiHeap {
+unsafe impl crate::internal_alloc_api::Allocator for MiHeap {
     #[inline]
     fn allocate(&self, layout: Layout) -> Result<NonNull<[u8]>, AllocError> {
         Ok(NonNull::slice_from_raw_parts(
@@ -474,8 +474,6 @@ unsafe impl allocator_api2::alloc::Allocator for MiHeap {
             new_layout.size(),
         ))
     }
-
-    common_allocator_impl!(@default);
 }
 
-delegate_impl_nightly_allocator!(MiHeap);
+impl_public_allocator_traits!(impl Allocator for MiHeap);

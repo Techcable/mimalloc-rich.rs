@@ -19,12 +19,9 @@ use core::alloc::Layout;
 use core::ffi::c_void;
 use core::ptr::NonNull;
 
-use allocator_api2::alloc::AllocError;
-
-#[macro_use]
-mod utils;
 pub mod allocator;
 pub mod heap;
+pub(crate) mod internal_alloc_api;
 pub mod options;
 pub mod subproc;
 
@@ -52,19 +49,6 @@ impl OutOfMemoryError {
                 Err(OutOfMemoryError)
             }
         }
-    }
-}
-impl From<OutOfMemoryError> for AllocError {
-    #[inline(always)]
-    fn from(_: OutOfMemoryError) -> Self {
-        AllocError
-    }
-}
-#[cfg(feature = "nightly-allocator-api")]
-impl From<OutOfMemoryError> for core::alloc::AllocError {
-    #[inline(always)]
-    fn from(_: OutOfMemoryError) -> Self {
-        core::alloc::AllocError
     }
 }
 
@@ -151,6 +135,15 @@ pub unsafe fn mi_usable_size(ptr: *mut c_void) -> usize {
     unsafe { sys::mi_usable_size(ptr) }
 }
 
+/// An error that occurs calling [`mi_expand`].
+///
+/// Triggered by b failing to expand in-place,
+/// which might happen even if there is otherwise sufficient mmeory to satisfy the request.
+#[derive(Debug, thiserror::Error)]
+#[error("Failed to expand allocation in-place")]
+#[non_exhaustive]
+pub struct ExpandError;
+
 /// Try to re-allocate memory to `new_size` bytes in-place.
 ///
 /// This supports expanding and shrinking memory.
@@ -167,12 +160,14 @@ pub unsafe fn mi_usable_size(ptr: *mut c_void) -> usize {
 /// Since the original pointer is never moved,
 /// this necessarily preserves the original alignment.
 ///
+/// [`AllocError`]: core::alloc::AllocError
+///
 /// ## Safety
 /// Pointer must be previously allocated memory or null.
 #[inline]
-pub unsafe fn mi_expand(ptr: *mut c_void, new_size: usize) -> Result<NonNull<c_void>, AllocError> {
+pub unsafe fn mi_expand(ptr: *mut c_void, new_size: usize) -> Result<NonNull<c_void>, ExpandError> {
     // SAFETY: Caller guarantees validity
-    NonNull::new(unsafe { sys::mi_expand(ptr, new_size) }).ok_or(AllocError)
+    NonNull::new(unsafe { sys::mi_expand(ptr, new_size) }).ok_or(ExpandError)
 }
 
 /// Re-allocate a zero-initialized block of memory with the specified size and alignment.

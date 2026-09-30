@@ -16,3 +16,6 @@ allow = [
     "ISC"
 ]
 private.ignore = false
+
+[bans]
+skip = [{ crate = "allocator-api2", reason = "need to support multiple versions" }]

@@ -1,0 +1,4 @@
+allowed-duplicate-crates = [
+    # Needed to support multiple versions
+    "allocator-api2",
+]

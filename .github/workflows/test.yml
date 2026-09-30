@@ -39,12 +39,17 @@ jobs:
         # NOTE: Features to test must be specified manually. They are applied to all versions separately.
         features:
           - "mimalloc-rich/vendored"
-          - "mimalloc-rich/vendored mimalloc-rich/declare-global-allocator"
+          - "mimalloc-rich/vendored mimalloc-rich/allocator-api2-all"
+          - "mimalloc-rich/vendored mimalloc-rich/declare-global-allocator "
           - "mimalloc-rich/vendored mimalloc-rich/debug-if-debug"
           - "mimalloc-rich/vendored mimalloc-rich/debug mimalloc-rich/declare-global-allocator"
           - "mimalloc-rich/vendored mimalloc-rich/debug-if-debug mimalloc-rich-sys/valgrind"
           - "mimalloc-rich/vendored mimalloc-rich-sys/override-libc-malloc"
           - "mimalloc-rich/vendored mimalloc-rich-sys/debug-full"
+          - "mimalloc-rich/vendored mimalloc-rich/allocator-api2-all"
+          - "mimalloc-rich/vendored mimalloc-rich/allocator-api2-02"
+          - "mimalloc-rich/vendored mimalloc-rich/allocator-api2-03"
+          - "mimalloc-rich/vendored mimalloc-rich/allocator-api2-04"
         rustflags:
           - ""
         extra_flags:
@@ -54,6 +59,8 @@ jobs:
             features: "mimalloc-rich/vendored mimalloc-rich/debug mimalloc-rich/declare-global-allocator mimalloc-rich/nightly-allocator-api mimalloc-rich/nightly"
           - rust: nightly
             features: "mimalloc-rich/vendored mimalloc-rich/nightly-allocator-api mimalloc-rich/nightly"
+          - rust: nightly
+            features: "mimalloc-rich/vendored mimalloc-rich/nightly-allocator-api mimalloc-rich/allocator-api2-all"
           - rust: nightly
             rustflags: "-Zsanitizer=address"
             features: "mimalloc-rich/vendored mimalloc-rich/debug-if-debug mimalloc-rich-sys/sanitize-address"
