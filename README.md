@@ -8,7 +8,12 @@
 
 cargo-reedme: info-end -->
 
-Bindings to the [mimalloc] allocator.
+Experimental bindings to the [mimalloc] allocator.
+
+In most cases, you should be using the excellent [`mimalloc` crate] instead.
+
+This crate offers some additional low-level features that are important for certain use cases.
+In particular, it provides functionality needed for implementing tracing garbage collectors.
 
 See the [official docs](https://microsoft.github.io/mimalloc/) for more details.
 
@@ -16,6 +21,7 @@ This includes raw bindings under the [`sys` module](https://docs.rs/mimalloc_ric
 as well as higher-level bindings added as needed.
 
 [mimalloc]: https://github.com/microsoft/mimalloc
+[`mimalloc` crate]: https://github.com/purpleprotocol/mimalloc_rust
 
 <!-- cargo-reedme: end -->
 

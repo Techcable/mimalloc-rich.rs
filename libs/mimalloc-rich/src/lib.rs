@@ -1,4 +1,9 @@
-//! Bindings to the [mimalloc] allocator.
+//! Experimental bindings to the [mimalloc] allocator.
+//!
+//! In most cases, you should be using the excellent [`mimalloc` crate] instead.
+//!
+//! This crate offers some additional low-level features that are important for certain use cases.
+//! In particular, it provides functionality needed for implementing tracing garbage collectors.
 //!
 //! See the [official docs](https://microsoft.github.io/mimalloc/) for more details.
 //!
@@ -6,6 +11,7 @@
 //! as well as higher-level bindings added as needed.
 //!
 //! [mimalloc]: https://github.com/microsoft/mimalloc
+//! [`mimalloc` crate]: https://github.com/purpleprotocol/mimalloc_rust
 #![warn(missing_docs, future_incompatible)]
 #![allow(clippy::inline_always, reason = "sometimes appropriate for low-level code")]
 #![no_std]
