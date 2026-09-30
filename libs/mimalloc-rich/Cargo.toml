@@ -49,7 +49,7 @@ nightly-allocator-api = []
 # Statically link against a vendored mimalloc
 #
 # This is currently required by mimalloc-sys-rich
-vendored = ["mimalloc-rich-sys/vendored-mimalloc"]
+vendored = ["mimalloc-rich-sys/vendored"]
 
 [lints]
 workspace = true

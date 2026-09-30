@@ -46,7 +46,7 @@ mod test {
     #[test]
     fn vendored_version_matches() {
         const {
-            assert!(cfg!(feature = "vendored-mimalloc"), "build should always be vendored");
+            assert!(cfg!(feature = "vendored"), "build should always be vendored");
         }
         let vendored_version = env!("MIMALLOC_VENDORED_VERSION");
         let runtime_version = super::mimalloc_version_str().to_string();

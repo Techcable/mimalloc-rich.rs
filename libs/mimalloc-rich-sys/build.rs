@@ -17,8 +17,8 @@ pub fn main() -> anyhow::Result<()> {
     //
     // build project
     //
-    if !has_feature("vendored-mimalloc") {
-        println!("cargo::error=The `vendored-mimalloc` feature is currently required");
+    if !has_feature("vendored") {
+        println!("cargo::error=The `vendored` feature is currently required");
         bail!("Missing required features")
     }
     let vendored_version: Version = Version::detect()?.unwrap_or_default();
@@ -129,7 +129,7 @@ macro_rules! version_info {
 }
 version_info! {
     V2 => {
-        vendored_required_feature => "vendored-mimalloc",
+        vendored_required_feature => "vendored",
         vendored_crate => mimalloc_rich_src_v2,
     },
     V3 => {

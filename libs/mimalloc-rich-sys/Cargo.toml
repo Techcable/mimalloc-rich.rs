@@ -35,7 +35,7 @@ mimalloc-rich-src-v2 = { workspace = true, optional = true }
 mimalloc-rich-src-v3 = { workspace = true, optional = true }
 
 [features]
-default = ["debug-if-debug", "vendored-mimalloc"]
+default = ["debug-if-debug", "vendored"]
 # Enable debug mode unconditionally
 debug = []
 # When debug mode is enabled, perform even more checks
@@ -67,8 +67,7 @@ valgrind = []
 # Statically link against vendored mimalloc (default version)
 #
 # Currently, this is the only supported linking option
-# TODO: Rename this to `vendored` for consistencty with `mimalloc-rich`
-vendored-mimalloc = ["dep:mimalloc-rich-src-v2"]
+vendored = ["dep:mimalloc-rich-src-v2"]
 
 [lints]
 workspace = true

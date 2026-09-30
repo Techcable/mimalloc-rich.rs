@@ -57,7 +57,7 @@ jobs:
           - ""
         include:
           - rust: stable
-            features: "mimalloc-rich-sys/vendored-mimalloc mimalloc-rich-sys/debug-if-debug mimalloc-rich-sys/force-mimalloc-v3"
+            features: "mimalloc-rich-sys/vendored mimalloc-rich-sys/debug-if-debug mimalloc-rich-sys/force-mimalloc-v3"
             # Right now, mimalloc v3 breaks the high-level bindings
             # As a result, we have to explicitly disable that crate when we test it
             extra_flags: "--exclude mimalloc-rich"

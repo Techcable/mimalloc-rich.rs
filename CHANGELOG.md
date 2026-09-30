@@ -24,6 +24,7 @@ Most changes include the relevant [jj](https://jj-vcs.dev) change ids in parens.
 - Split vendored sources into own crate (pvvpzosl)
   - Will reduce download time when there are multiple mimalloc versions.
   - Will reduces download time when building against a system library (not currently supported)
+- Rename `mimalloc-rich-sys/vendored-mimalloc` to `mimalloc-rich-sys/vendored` (nqpsmsnn)
 
 ## 0.1.0-alpha.0 - 2026-09-28
 Initial release.
