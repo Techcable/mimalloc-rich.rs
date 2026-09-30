@@ -13,6 +13,7 @@ Most changes include the relevant [jj](https://jj-vcs.dev) change ids in parens.
 ## Unreleased
 
 ### Changes
+- Deprecate the MiHeap API, as it will need to be rewritten when mimalloc v3 support is added (mztqvrpx)
 - Rename `mimalloc-rich-sys/override` feature to `mimalloc-rich-sys/override-libc-malloc` (zzxlwnyv)
 - Split vendored sources into own crate (pvvpzosl)
   - Will reduce download time when there are multiple mimalloc versions.

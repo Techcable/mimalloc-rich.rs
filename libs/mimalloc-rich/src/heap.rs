@@ -1,4 +1,5 @@
 //! Defines a high-level wrapper for the mimalloc heap api.
+#![deprecated(note = "Will be changed significantly when upgrading to mimalloc v3")]
 
 use core::alloc::Layout;
 use core::ffi::{c_int, c_void};
