@@ -12,6 +12,9 @@ Most changes include the relevant [jj](https://jj-vcs.dev) change ids in parens.
 
 ## Unreleased
 
+## 0.1.0-alpha.1 - 2026-09-30
+Split vendored sources into their own crate.
+
 ### Added
 - Support building mimalloc v3 (lnslyosl)
   - Using this version breaks most of the high-level bindings in `mimalloc-rich`
@@ -25,6 +28,12 @@ Most changes include the relevant [jj](https://jj-vcs.dev) change ids in parens.
   - Will reduce download time when there are multiple mimalloc versions.
   - Will reduces download time when building against a system library (not currently supported)
 - Rename `mimalloc-rich-sys/vendored-mimalloc` to `mimalloc-rich-sys/vendored` (nqpsmsnn)
+
+### Associated Versions
+- `mimalloc@2.5.2`
+- `mimalloc@3.5.3`
+- `mimalloc-rich-src-v2@1.5.200`
+- `mimalloc-rich-src-v3@1.5.300`
 
 ## 0.1.0-alpha.0 - 2026-09-28
 Initial release.

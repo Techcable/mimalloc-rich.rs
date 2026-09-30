@@ -5,7 +5,7 @@ members = ["libs/*"]
 [workspace.package]
 # Make sure to bump vendored src crate patch versions
 # whenever this crate has an imcompatible prerelease version
-version = "0.1.0-alpha.0"
+version = "0.1.0-alpha.1"
 authors = ["Techcable <Techcable@techcable.net>"]
 edition = "2024"
 # 1.81 - core::error::Error, #[expect(.., reason = "...")]
@@ -31,10 +31,10 @@ itertools = "0.15"
 
 # workspace/path dependencies
 
-mimalloc-rich-src-build = { path = "libs/mimalloc-rich-src-build", version = "0.1.0-alpha.0" }
+mimalloc-rich-src-build = { path = "libs/mimalloc-rich-src-build", version = "0.1.0-alpha.1" }
 mimalloc-rich-src-v2 = { path = "libs/mimalloc-rich-src-v2", version = "1" }
 mimalloc-rich-src-v3 = { path = "libs/mimalloc-rich-src-v3", version = "1" }
-mimalloc-rich-sys = { path = "libs/mimalloc-rich-sys", version = "0.1.0-alpha.0" }
+mimalloc-rich-sys = { path = "libs/mimalloc-rich-sys", version = "0.1.0-alpha.1" }
 
 [workspace.lints.clippy]
 ## groups ##
