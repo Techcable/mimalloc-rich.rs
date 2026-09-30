@@ -55,8 +55,6 @@ jobs:
           - rust: nightly
             features: "mimalloc-rich/vendored mimalloc-rich/nightly-allocator-api mimalloc-rich/nightly"
           - rust: nightly
-            features: "mimalloc-rich/vendored mimalloc-rich/nightly-allocator-api mimalloc-rich/nightly"
-          - rust: nightly
             rustflags: "-Zsanitizer=address"
             features: "mimalloc-rich/vendored mimalloc-rich/debug-if-debug mimalloc-rich-sys/sanitize-address"
             extra_flags: "--target x86_64-unknown-linux-gnu"
