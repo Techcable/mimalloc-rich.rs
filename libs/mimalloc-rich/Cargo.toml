@@ -30,7 +30,7 @@ allocator-api2-04 = { package = "allocator-api2", version = "0.4", default-featu
 hashbrown = "0.17"
 
 [build-dependencies]
-rustversion-detect = "0.3"
+rustversion = "1"
 
 [features]
 default = ["allocator-api2-all", "debug-if-debug", "vendored"]
