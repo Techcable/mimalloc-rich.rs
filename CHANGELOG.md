@@ -12,6 +12,12 @@ Most changes include the relevant [jj](https://jj-vcs.dev) change ids in parens.
 
 ## Unreleased
 
+### Fixed
+- On Rust 1.93 or later, precisely detect `cfg!(debug_assertions)` for the `debug-if-debug` feature
+  - Before [cargo#16160], build-script detection was imperfect as cargo didn't set the appropriate environment variables
+
+[cargo#16160]: https://github.com/rust-lang/cargo/pull/16160
+
 ## 0.1.0-alpha.1 - 2026-09-30
 Split vendored sources into their own crate.
 

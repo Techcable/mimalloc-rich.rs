@@ -48,12 +48,29 @@ impl CompilationContext {
 
     pub fn cargo_build_script() -> Self {
         CompilationContext {
-            // No way to detect this with 100% accuracy, but this should be decently close
-            rust_debug: var("PROFILE").as_deref() == Some("debug") || var("DEBUG").as_deref() == Some("true"),
+            rust_debug: is_debug_assertions_enabled(),
             active_sanitizers: match var("CARGO_CFG_SANITIZE") {
                 Some(setting) => setting.split(',').map(String::from).collect(),
                 None => BTreeSet::new(),
             },
         }
+    }
+}
+
+/// Check if debug assertions are enabled for the current build.
+///
+/// # Fallback
+/// Before Rust 1.93 (PR [rust-lang/cargo#16160]),
+/// the `CARGO_CFG_DEBUG_ASSERTIONS` variable was never set in debug mode.
+/// There was no way to detect debug mode with 100% accuracy,
+/// but we implement a reasonable fallback on those versions.
+///
+/// [rust-lang/cargo#16160]: https://github.com/rust-lang/cargo/pull/16160
+fn is_debug_assertions_enabled() -> bool {
+    if rustversion::cfg!(since(1.93)) {
+        var("CARGO_CFG_DEBUG_ASSERTIONS").is_some()
+    } else {
+        // resaonable but imperfect fallback on old versions of rust.
+        var("PROFILE").as_deref() == Some("debug") || var("DEBUG").as_deref() == Some("true")
     }
 }
