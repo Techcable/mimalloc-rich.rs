@@ -74,8 +74,7 @@ def run_format(ctx, check=False):
     log_info(f"{verb} formatting")
     maybe_check = " --check" if check else ""
     maybe_fix = " --fix" if not check else ""
-    # Use pinned nightly until rust-lang/rustfmt#7147 is fixed
-    ctx.run("cargo +nightly-2026-09-16 fmt --all" + maybe_check)
+    ctx.run("cargo +nightly fmt --all" + maybe_check)
     ctx.run("tombi format" + maybe_check)
 
     # need python format for invoke.py

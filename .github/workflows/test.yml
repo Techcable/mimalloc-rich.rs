@@ -289,10 +289,8 @@ jobs:
         with:
           submodules: true
         # need nightly for unstable formatting features
-      - uses: dtolnay/rust-toolchain@master
+      - uses: dtolnay/rust-toolchain@nightly
         with:
-          # Use pinned nightly until rust-lang/rustfmt#7147 is fixed
-          toolchain: nightly-2026-09-16
           components: rustfmt
       - shell: bash
         # While `--all` is normally an alias for `--workspace`, `cargo fmt` doesn't accept the latter
