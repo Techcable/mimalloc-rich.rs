@@ -15,6 +15,7 @@ categories = ["api-bindings", "development-tools::build-utils"]
 anyhow = "1"
 cmake.workspace = true
 itertools.workspace = true
+rustversion = "1"
 semver = "1"
 
 [lints]
