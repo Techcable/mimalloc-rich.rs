@@ -49,8 +49,6 @@ pub fn main() -> anyhow::Result<()> {
         .with_context(|| format!("Failed to build vendored mimalloc {vendored_version}"))?;
 
     println!("cargo::rustc-env=MIMALLOC_VENDORED_VERSION={}", result.mimalloc_version);
-    println!("cargo::rustc-link-search=native={}", result.library_dir.display());
-    println!("cargo::rustc-link-lib=static={}", result.library_name);
 
     //
     // generate bindings

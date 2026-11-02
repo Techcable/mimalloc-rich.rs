@@ -1,7 +1,7 @@
+use std::fmt::Write as _;
 use std::path::{Path, PathBuf};
 
-use anyhow::{Context, anyhow, bail, ensure};
-use itertools::Itertools;
+use anyhow::{Context, bail, ensure};
 
 use crate::VendoredSource;
 use crate::context::CompilationContext;
@@ -28,12 +28,12 @@ pub fn build(code: &VendoredSource, options: &Options, ctx: &CompilationContext)
     // basic sanity checks
     ensure!(
         ctx.is_cargo_build_script(),
-        "Right now, building does not work outside a cargo build script (due to `cmake` crate)",
+        "Right now, building does not work outside a cargo build script (due to `cc` crate)",
     );
     eprintln!("Attempting to build mimalloc at {}", code.source_root.display());
-    if !code.source_root.join("CMakeLists.txt").is_file() {
+    if !code.source_root.join("src/static.c").is_file() {
         println!(
-            "cargo::error=The vendored mimalloc source code is missing CMakeLists.txt. Is the submodule initialized?"
+            "cargo::error=The vendored mimalloc source code is missing src/static.c. Is the submodule initialized?"
         );
         bail!("Submodule not initialized");
     }
@@ -43,83 +43,231 @@ pub fn build(code: &VendoredSource, options: &Options, ctx: &CompilationContext)
     crate::version::verify_version(code)?;
     ctx.depend_file(&code.source_root);
 
-    // configure options
-    let mut config = cmake::Config::new(&code.source_root);
-    if debug {
-        config.profile("Debug");
-    } else {
-        config.profile("Release");
+    // Let cc handle compiler selection, Cargo's optimization/debug settings, and
+    // link metadata. All mimalloc sources are included by this translation unit.
+    let library_dir = PathBuf::from(std::env::var_os("OUT_DIR").context("OUT_DIR is not set")?);
+    let target_os = std::env::var("CARGO_CFG_TARGET_OS")?;
+    let target_env = std::env::var("CARGO_CFG_TARGET_ENV")?;
+    let target_vendor = std::env::var("CARGO_CFG_TARGET_VENDOR")?;
+    let mut config = cc::Build::new();
+    // Both versions use MI_DEBUG=2 for debug builds and =3 for full checks.
+    // v3 renamed the CMake option MI_DEBUG_FULL to MI_DEBUG=FULL, but the C
+    // definition is unchanged, so this mapping works for both versions.
+    // https://github.com/microsoft/mimalloc/blob/v2.5.2/CMakeLists.txt#L312-L331
+    // https://github.com/microsoft/mimalloc/blob/v3.6.1/CMakeLists.txt#L426-L468
+    config
+        .include(code.source_root.join("include"))
+        .define("MI_STATIC_LIB", None)
+        .define(
+            "MI_DEBUG",
+            if debug_full {
+                "3"
+            } else if debug {
+                "2"
+            } else {
+                "0"
+            },
+        );
+    if !debug {
+        config.define("NDEBUG", None).define("MI_BUILD_RELEASE", None);
     }
-    // enables AddressSanitizer/valgrind
-    // TODO: Failure to find AddressSanitizer/valgrind is not currently reported
+    // TODO(v3): Match CMake's debug sampling defaults explicitly. v2's header
+    // enables MI_GUARDED=1 in debug builds. v3's header also defaults to =1 and
+    // MI_PROFILE=1, while v3's CMake build selects =2 for both in debug builds
+    // (v3.6.1 disables guarded sampling on Emscripten/WASI).
+    // This direct build currently uses the header defaults, so it lacks v3's
+    // fine-grained debug sampling. Release profiling already defaults to =1.
+    // https://github.com/microsoft/mimalloc/blob/v2.5.2/include/mimalloc/types.h#L79-L82
+    // https://github.com/microsoft/mimalloc/blob/v3.6.1/include/mimalloc/types.h#L104-L123
+    // https://github.com/microsoft/mimalloc/blob/v3.6.1/CMakeLists.txt#L470-L487
+    // https://github.com/microsoft/mimalloc/blob/v3.6.1/CMakeLists.txt#L540-L557
+    if target_env == "msvc" {
+        // Match upstream: MSVC uses C++ atomics instead of C11 atomics.
+        // https://github.com/microsoft/mimalloc/blob/v3.6.1/CMakeLists.txt#L259-L279
+        config.cpp(true).std("c++17").flag("/Zc:__cplusplus");
+    } else {
+        config
+            .std("c11")
+            .flag_if_supported("-fvisibility=hidden")
+            .flag_if_supported("-Wno-unknown-pragmas");
+        if target_os != "haiku" {
+            config.flag_if_supported(if target_env == "musl" {
+                "-ftls-model=local-dynamic"
+            } else {
+                "-ftls-model=initial-exec"
+            });
+        }
+    }
+    if target_env == "musl" {
+        config.define("MI_LIBC_MUSL", "1");
+    }
+    if target_os == "windows" && target_env == "gnu" {
+        config.define("_WIN32_WINNT", "0x600");
+    }
+    // Upstream's ARM64 optimization flags differ: v2 selects ARMv8.1, while
+    // v3 selects ARMv8.3 on Apple and ARMv8.1 elsewhere. This helper currently
+    // leaves architecture flags to cc and user CFLAGS instead of matching those
+    // upstream defaults.
+    // https://github.com/microsoft/mimalloc/blob/v2.5.2/CMakeLists.txt#L493-L503
+    // https://github.com/microsoft/mimalloc/blob/v3.6.1/CMakeLists.txt#L787-L826
+    if secure {
+        // Both versions map secure mode to MI_SECURE=4. CMake also defines
+        // MI_FREE_IS_CHECKED=1 for v3. TODO(v3.5.3): Set it explicitly for
+        // the vendored version; v3.6.1 derives it in types.h for MI_SECURE>=2.
+        // https://github.com/microsoft/mimalloc/blob/v2.5.2/CMakeLists.txt#L233-L240
+        // https://github.com/microsoft/mimalloc/blob/v3.6.1/CMakeLists.txt#L338-L352
+        // https://github.com/microsoft/mimalloc/blob/v3.6.1/CMakeLists.txt#L499-L509
+        // https://github.com/microsoft/mimalloc/blob/v3.6.1/include/mimalloc/types.h#L77-L81
+        config.define("MI_SECURE", "4");
+    }
+    if visit_abandoned {
+        // v2 uses this definition to enable its visit_abandoned runtime option
+        // by default. v3 no longer reads it: abandoned blocks are visited through
+        // a per-heap API, and the old runtime option is deprecated.
+        // https://github.com/microsoft/mimalloc/blob/v2.5.2/src/options.c#L158-L162
+        // https://github.com/microsoft/mimalloc/blob/v3.6.1/include/mimalloc.h#L328-L330
+        // https://github.com/microsoft/mimalloc/blob/v3.6.1/include/mimalloc.h#L499
+        config.define("MI_VISIT_ABANDONED", "1");
+    }
+    if override_malloc {
+        config.define("MI_MALLOC_OVERRIDE", None);
+        if target_env != "msvc" {
+            config.flag_if_supported("-fno-builtin-malloc");
+        }
+        if target_vendor == "apple" {
+            config.define("MI_OSX_ZONE", "1").define("MI_OSX_INTERPOSE", "1");
+        }
+    }
+    // As in the upstream build, unavailable tracking headers disable tracking
+    // with a warning. Probe with the target compiler, including user CFLAGS.
+    // v3 consolidates the CMake switches into MI_TRACK=VALGRIND/ASAN, but still
+    // emits the same MI_TRACK_VALGRIND/MI_TRACK_ASAN C definitions used here.
+    // https://github.com/microsoft/mimalloc/blob/v3.6.1/CMakeLists.txt#L354-L391
     match alloc_tracker {
         Some(DebugAllocTracker::Valgrind) => {
-            config.define("MI_TRACK_VALGRIND", "ON");
+            if has_tracking_headers(&config, &library_dir, &["valgrind/valgrind.h", "valgrind/memcheck.h"])? {
+                config.define("MI_TRACK_VALGRIND", "1");
+            } else {
+                ctx.compile_warning("Valgrind headers not found; disabling Valgrind support");
+            }
         }
         Some(DebugAllocTracker::AddressSanitizer) => {
-            config.define("MI_TRACK_ASAN", "ON");
+            if target_vendor == "apple" && override_malloc {
+                ctx.compile_warning(
+                    "AddressSanitizer is incompatible with malloc overrides on Apple targets; disabling tracking",
+                );
+            } else if has_tracking_headers(&config, &library_dir, &["sanitizer/asan_interface.h"])? {
+                config.define("MI_TRACK_ASAN", "1");
+                config.flag(if target_env == "msvc" {
+                    "/fsanitize=address"
+                } else {
+                    "-fsanitize=address"
+                });
+            } else {
+                ctx.compile_warning("AddressSanitizer headers not found; disabling AddressSanitizer support");
+            }
         }
         None => {}
     }
-    if secure {
-        config.define("MI_SECURE", "ON");
-    }
-    if debug_full {
-        config.define("MI_DEBUG_FULL", "ON");
-    }
-    if visit_abandoned {
-        // This isn't a cmake flag (at least not currently)
-        config.cflag("-DMI_VISIT_ABANDONED");
-    }
-    config.define("MI_BUILD_SHARED", "OFF"); // not necessary
-    config.define("MI_OVERRIDE", if override_malloc { "ON" } else { "OFF" });
-    let resulting_build_dir = config.build();
-    // TODO: Use pkg-config instead?
-    let libs_dir = find_mimalloc_libs_dir(&resulting_build_dir).context("failed to find libs dir")?;
-    let library_name = {
-        let mut name_parts = vec!["mimalloc"];
-        if matches!(alloc_tracker, Some(DebugAllocTracker::AddressSanitizer)) {
-            name_parts.push("asan");
+    let library_name = "mimalloc".to_owned();
+    // v2 includes segment.c and segment-map.c; v3 uses page-map, thread-local
+    // heap, sampling, and subprocess implementations. v3.6.1 organizes these
+    // under arena/, alloc/, heap/, prim/, profile/, and util/. Each version
+    // includes its own source set in static.c, so no version-specific file
+    // list is needed here.
+    // https://github.com/microsoft/mimalloc/blob/v2.5.2/src/static.c#L23-L41
+    // https://github.com/microsoft/mimalloc/blob/v3.6.1/src/static.c#L29-L65
+    config
+        .file(code.source_root.join("src/static.c"))
+        .try_compile(&library_name)
+        .context("Failed to compile mimalloc src/static.c")?;
+
+    // Native dependencies previously selected by CMake. Emit these after the
+    // static archive so linkers can resolve mimalloc's external symbols.
+    // https://github.com/microsoft/mimalloc/blob/v3.6.1/CMakeLists.txt#L885-L900
+    if target_os == "windows" {
+        for lib in ["psapi", "shell32", "user32", "advapi32", "bcrypt"] {
+            println!("cargo::rustc-link-lib={lib}");
         }
-        if debug {
-            name_parts.push("debug");
-        }
-        name_parts.join("-")
-    };
+    } else if std::env::var("CARGO_CFG_TARGET_FAMILY").is_ok_and(|families| families.split(',').any(|f| f == "unix")) {
+        link_unix_libraries(&config, &library_dir)?;
+    }
     Ok(BuiltLibrary {
-        library_dir: libs_dir,
+        library_dir,
         library_name,
         header_file: code.source_root.join("include/mimalloc.h"),
         mimalloc_version: code.expected_version.clone(),
     })
 }
 
-fn find_mimalloc_libs_dir(base: &Path) -> anyhow::Result<PathBuf> {
-    // in a subdirectory lib/mimalloc-2.2
-    // want to find this without hardcoding the version
-    let libs_dir = ["lib", "lib64"]
-        .into_iter()
-        .map(|name| base.join(name))
-        .find(|dir| dir.is_dir())
-        .ok_or_else(|| anyhow!("Failed to find primary libs subdir"))?;
-    // if lib/mimalloc exists (without suffix), prefer that
-    let preferred_entry = libs_dir.join("mimalloc");
-    if preferred_entry.is_dir() {
-        return Ok(preferred_entry);
+/// Emit link directives for optional Unix libraries accepted by the target C compiler's linker.
+///
+/// This tests library availability, not whether mimalloc needs any particular symbol.
+/// The executable is only linked, never run, so cross-compilation needs no target runner.
+/// This assumes the C toolchain and Rust's final linker can find the same libraries.
+/// Rust precedent: `libz-sys` also invokes the compiler selected by `cc` to link a
+/// smoke program, then emits a link directive on success. Its probe additionally
+/// references a zlib symbol; ours follows mimalloc's library-availability checks.
+///
+/// - <https://github.com/rust-lang/libz-sys/blob/1.1.31/build.rs#L238-L253>
+/// - <https://github.com/rust-lang/libz-sys/blob/1.1.31/build.rs#L87-L98>
+/// - <https://github.com/rust-lang/libz-sys/blob/1.1.31/src/smoke.c#L1-L5>
+///
+/// An alternative is to maintain target-specific link rules, as `libmimalloc-sys`
+/// does for Linux ARM's atomic support. Here we retain mimalloc's upstream probes
+/// to avoid assuming that a target always provides a particular library.
+/// <https://github.com/purpleprotocol/mimalloc_rust/blob/v0.1.49/libmimalloc-sys/build.rs#L86-L93>
+fn link_unix_libraries(config: &cc::Build, out_dir: &Path) -> anyhow::Result<()> {
+    // Some targets provide these in libc, others need separate libraries.
+    // Like upstream, probe by linking (never running) with the target compiler.
+    // https://github.com/microsoft/mimalloc/blob/v3.6.1/CMakeLists.txt#L866-L883
+    let probe = out_dir.join("mimalloc-link-libraries.c");
+    std::fs::write(&probe, "int main(void) { return 0; }\n").context("Failed to write library probe")?;
+    let compiler = config.try_get_compiler()?;
+    for lib in ["pthread", "rt", "atomic"] {
+        let output = compiler
+            .to_command()
+            .arg(&probe)
+            .arg(format!("-l{lib}"))
+            .arg("-o")
+            .arg(out_dir.join("mimalloc-link-libraries"))
+            .output()
+            .with_context(|| format!("Failed to probe native library {lib}"))?;
+        if output.status.success() {
+            println!("cargo::rustc-link-lib={lib}");
+        }
     }
-    let libs_dir_entries = libs_dir.read_dir()?;
-    libs_dir_entries.process_results(|entries| {
-        entries
-            .collect_vec()
-            .into_iter()
-            .filter(|entry| entry.file_name().to_str().is_some_and(|x| x.starts_with("mimalloc-")))
-            .map(|entry| entry.path())
-            .exactly_one()
-            .with_context(|| {
-                format!(
-                    "Expected to find a single `mimalloc-*` lib directory in {}",
-                    libs_dir.display()
-                )
-            })
-    })?
+    Ok(())
+}
+
+/// Check whether the target toolchain can compile the requested allocation-tracking headers.
+///
+/// Enabling Valgrind or ASan tracking makes mimalloc include external development
+/// headers. A Cargo feature does not ensure those headers are installed. Mimalloc's
+/// CMake build probes them and disables unavailable tracking with a warning; this
+/// check preserves that fallback instead of failing the entire mimalloc compilation.
+/// See <https://github.com/microsoft/mimalloc/blob/v3.6.1/CMakeLists.txt#L365-L391>.
+///
+/// Compiling with a clone of the configured `cc::Build` checks the target compiler,
+/// sysroot, include paths, language, and user flags rather than host filesystem paths.
+/// No target executable is linked or run. Probe metadata and compiler diagnostics
+/// are suppressed so Cargo does not link the probe archive and callers can issue
+/// one tracking-specific warning. A failed compile/archive returns `false`; writing
+/// the probe can return an error. Success does not establish sanitizer runtime or
+/// instrumentation support, which the later build and final link must provide.
+fn has_tracking_headers(config: &cc::Build, out_dir: &Path, headers: &[&str]) -> anyhow::Result<bool> {
+    let probe = out_dir.join("mimalloc-tracking-headers.c");
+    let mut source = String::new();
+    for header in headers {
+        writeln!(source, "#include <{header}>")?;
+    }
+    source.push_str("int mimalloc_tracking_headers(void) { return 0; }\n");
+    std::fs::write(&probe, source).context("Failed to write tracking header probe")?;
+    Ok(config
+        .clone()
+        .cargo_metadata(false)
+        .cargo_warnings(false)
+        .file(probe)
+        .try_compile("mimalloc-tracking-headers")
+        .is_ok())
 }

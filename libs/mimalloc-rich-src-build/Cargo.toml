@@ -13,7 +13,7 @@ categories = ["api-bindings", "development-tools::build-utils"]
 
 [dependencies]
 anyhow = "1"
-cmake.workspace = true
+cc.workspace = true
 itertools.workspace = true
 rustversion = "1"
 semver = "1"

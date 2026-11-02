@@ -23,7 +23,7 @@ categories = ["api-bindings", "memory-management", "no-std", "no-std::no-alloc"]
 # build tools
 
 bindgen = "0.73"
-cmake = "0.1"
+cc = "1"
 
 # utiltiies (only used for build)
 
