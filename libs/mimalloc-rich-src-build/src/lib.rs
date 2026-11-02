@@ -21,6 +21,7 @@ pub mod options;
 #[doc(hidden)]
 pub mod version;
 
+#[derive(Debug)]
 #[doc(hidden)]
 pub struct VendoredSource {
     /// The root of the vendored mimalloc repository.
@@ -30,6 +31,7 @@ pub struct VendoredSource {
     /// The expected version of the mimalloc library.
     pub expected_version: String,
 }
+
 impl VendoredSource {
     pub(crate) fn crate_desc(&self) -> impl Display {
         struct Desc<'a>(&'a VendoredSource);
@@ -39,5 +41,14 @@ impl VendoredSource {
             }
         }
         Desc(self)
+    }
+
+    #[track_caller]
+    pub(crate) fn parse_expected_version(&self) -> semver::Version {
+        self.expected_version
+            .parse::<semver::Version>()
+            .unwrap_or_else(|cause| {
+                panic!("Invalid `expected_version` should be semver (for {self:?}, cause: {cause})")
+            })
     }
 }
