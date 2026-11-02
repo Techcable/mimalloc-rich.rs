@@ -51,25 +51,27 @@ jobs:
           - "mimalloc-rich/vendored mimalloc-rich/allocator-api2-03"
           - "mimalloc-rich/vendored mimalloc-rich/allocator-api2-04"
           - "mimalloc-rich/vendored mimalloc-rich/allocator-api2-all mimalloc-rich-sys/force-mimalloc-v2"
+          - "mimalloc-rich/vendored mimalloc-rich-sys/debug-if-debug mimalloc-rich-sys/force-mimalloc-v3"
         rustflags:
           - ""
         extra_flags:
           - ""
         include:
-          - rust: stable
-            features: "mimalloc-rich-sys/vendored mimalloc-rich-sys/debug-if-debug mimalloc-rich-sys/force-mimalloc-v3"
-            # Right now, mimalloc v3 breaks the high-level bindings
-            # As a result, we have to explicitly disable that crate when we test it
-            extra_flags: "--exclude mimalloc-rich"
           - rust: nightly
             features: "mimalloc-rich/vendored mimalloc-rich/debug mimalloc-rich/declare-global-allocator mimalloc-rich/nightly"
           - rust: nightly
             features: "mimalloc-rich/vendored mimalloc-rich/nightly"
           - rust: nightly
+            features: "mimalloc-rich/vendored mimalloc-rich/nightly mimalloc-rich-sys/force-mimalloc-v2"
+          - rust: nightly
             features: "mimalloc-rich/vendored mimalloc-rich/nightly mimalloc-rich/allocator-api2-all"
           - rust: nightly
             rustflags: "-Zsanitizer=address"
             features: "mimalloc-rich/vendored mimalloc-rich/debug-if-debug mimalloc-rich-sys/sanitize-address"
+            extra_flags: "--target x86_64-unknown-linux-gnu"
+          - rust: nightly
+            rustflags: "-Zsanitizer=address"
+            features: "mimalloc-rich/vendored mimalloc-rich/debug-if-debug mimalloc-rich-sys/sanitize-address mimalloc-rich-sys/force-mimalloc-v2"
             extra_flags: "--target x86_64-unknown-linux-gnu"
 
     steps:

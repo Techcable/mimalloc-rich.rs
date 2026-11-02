@@ -32,14 +32,17 @@ def test(ctx):
     run_format(ctx, check=True)
 
 
-DEFAULT_DOC_FEATURES = ["mimalloc-rich/declare-global-allocator"]
+DEFAULT_DOC_FEATURES = [
+    "mimalloc-rich/nightly-doc",
+    "mimalloc-rich/declare-global-allocator",
+]
 
 
 @task
 def check(ctx, format=True):
     clippy(ctx)
     ctx.run(
-        "cargo doc --document-private-items --no-deps --workspace --features "
+        "cargo +nightly doc --document-private-items --no-deps --workspace --features "
         + ",".join(DEFAULT_DOC_FEATURES)
     )
     ctx.run("cargo shear")
@@ -65,7 +68,10 @@ def cargo_reedme(ctx, check=False):
 
 @task
 def clippy(ctx):
-    ctx.run("cargo clippy --workspace --all-targets", pty=True)
+    for features in ["", *(f"mimalloc-rich-sys/force-mimalloc-v{x}" for x in [2, 3])]:
+        ctx.run(
+            f"cargo clippy --workspace --all-targets --features={features}", pty=True
+        )
 
 
 @task(name="format")

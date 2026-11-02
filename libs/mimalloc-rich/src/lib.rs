@@ -15,6 +15,7 @@
 #![warn(missing_docs, future_incompatible)]
 #![allow(clippy::inline_always, reason = "sometimes appropriate for low-level code")]
 #![no_std]
+#![cfg_attr(feature = "nightly-doc", feature(doc_cfg))]
 
 use core::alloc::Layout;
 use core::ffi::c_void;
@@ -199,7 +200,7 @@ pub unsafe fn mi_rezalloc_aligned(ptr: *mut c_void, layout: Layout) -> Result<No
 /// Free the specified pointer, calling [`sys::mi_free`].
 ///
 /// Does nothing if the pointer is NULL.
-/// This can be used to free memory from any [heap](heap::MiHeap).
+/// This can be used to free memory from any [heap](heap::MiLocalHeap).
 ///
 /// ## Safety
 /// If non-null, the pointer must have been previously allocated through mimalloc.

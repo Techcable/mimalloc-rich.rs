@@ -1,7 +1,7 @@
 //! The mimalloc subprocess API.
 //!
 //! Not much is implemented here,
-//! only the minimum needed for [`crate::heap::mi_abandoned_visit_blocks`].
+//! only the minimum needed for `crate::heap::mi_abandoned_visit_blocks` on v2.
 
 /// A mimalloc subprocess id,
 /// used to ensure one process doesn't free the resources of another.

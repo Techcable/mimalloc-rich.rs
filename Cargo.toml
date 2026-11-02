@@ -4,7 +4,7 @@ members = ["libs/*"]
 
 [workspace.package]
 # Make sure to bump vendored src crate patch versions
-# whenever this crate has an imcompatible prerelease version
+# whenever this crate has an incompatible prerelease version
 version = "0.1.0-alpha.1"
 authors = ["Techcable <Techcable@techcable.net>"]
 edition = "2024"
@@ -76,7 +76,7 @@ ptr_as_ptr = "allow" # pointer casts are fine as long as they don't violate anot
 if_not_else = "allow"
 items_after_statements = "allow"
 needless_continue = "allow"
-# done intentionally to make sure certian code type checks
+# done intentionally to make sure certain code type checks
 no_effect_underscore_binding = "allow"
 # these can actually make things clearer
 redundant_else = "allow"
