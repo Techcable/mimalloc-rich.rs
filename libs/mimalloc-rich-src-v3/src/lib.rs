@@ -26,3 +26,11 @@ fn vendored_source() -> VendoredSource {
 pub fn build(options: &Options, ctx: &CompilationContext) -> anyhow::Result<BuiltLibrary> {
     mimalloc_rich_src_build::build::build(&vendored_source(), options, ctx)
 }
+
+#[cfg(test)]
+mod test {
+    #[test]
+    fn verify_version() {
+        mimalloc_rich_src_build::version::verify_version(&super::vendored_source()).unwrap();
+    }
+}
