@@ -8,7 +8,7 @@ pub mod cmake;
 pub mod krate;
 
 pub fn verify_version(vendored_source: &VendoredSource) -> anyhow::Result<()> {
-    // allow optout in case these version checks somehow fail in the future
+    // allow opt-out in case these version checks somehow fail in the future
     if std::env::var_os("MIMALLOC_RICH_SKIP_VERSION_VERIFY").is_some_and(|x| !x.is_empty()) {
         return Ok(());
     }
