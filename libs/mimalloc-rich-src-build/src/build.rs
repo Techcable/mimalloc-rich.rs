@@ -1,3 +1,4 @@
+use std::fmt::{Display, Formatter};
 use std::path::{Path, PathBuf};
 
 use anyhow::{Context, anyhow, bail, ensure};
@@ -7,13 +8,28 @@ use crate::VendoredSource;
 use crate::context::CompilationContext;
 use crate::options::{DebugAllocTracker, Options};
 
+#[derive(Debug, Clone)]
+pub struct BuiltVersion(semver::Version);
+impl BuiltVersion {
+    #[inline]
+    pub fn major_version(&self) -> u64 {
+        self.0.major
+    }
+}
+impl Display for BuiltVersion {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
+
 #[derive(Debug)]
 #[non_exhaustive]
 pub struct BuiltLibrary {
     pub library_name: String,
     pub library_dir: PathBuf,
     pub header_file: PathBuf,
-    pub mimalloc_version: String,
+    pub include_dir: PathBuf,
+    pub mimalloc_version: BuiltVersion,
 }
 
 pub fn build(code: &VendoredSource, options: &Options, ctx: &CompilationContext) -> anyhow::Result<BuiltLibrary> {
@@ -89,8 +105,9 @@ pub fn build(code: &VendoredSource, options: &Options, ctx: &CompilationContext)
     Ok(BuiltLibrary {
         library_dir: libs_dir,
         library_name,
+        include_dir: code.source_root.join("include"),
         header_file: code.source_root.join("include/mimalloc.h"),
-        mimalloc_version: code.expected_version.clone(),
+        mimalloc_version: BuiltVersion(code.parse_expected_version()),
     })
 }
 

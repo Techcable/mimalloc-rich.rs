@@ -12,6 +12,9 @@ Most changes include the relevant [jj](https://jj-vcs.dev) change ids in parens.
 
 ## Unreleased
 
+### Added
+- Have mimalloc-rich-src emit version & include build metadata (sykvonmx)
+
 ### Changes
 - Update mimalloc v3 to v3.6.1 (vwvxvtts)
 - Add `links = "mimalloc"` to mimalloc-rich-sys (tuplmswo)
