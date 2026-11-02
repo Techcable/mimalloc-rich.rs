@@ -14,6 +14,7 @@ Most changes include the relevant [jj](https://jj-vcs.dev) change ids in parens.
 
 ### Changes
 - Update miamlloc v3 to v3.6.1
+- Add `links = "mimalloc"` to mimalloc-rich-src (tuplmswo)
 
 ### Fixed
 - On Rust 1.93 or later, precisely detect `cfg!(debug_assertions)` for the `debug-if-debug` feature
