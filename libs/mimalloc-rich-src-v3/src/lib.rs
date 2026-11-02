@@ -11,7 +11,7 @@ use mimalloc_rich_src_build::build::BuiltLibrary;
 use mimalloc_rich_src_build::context::CompilationContext;
 use mimalloc_rich_src_build::options::Options;
 
-const EXPECTED_MIMALLOC_VERSION: &str = "3.5.3";
+const EXPECTED_MIMALLOC_VERSION: &str = "3.6.1";
 
 fn vendored_source() -> VendoredSource {
     VendoredSource {
