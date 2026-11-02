@@ -12,6 +12,9 @@ Most changes include the relevant [jj](https://jj-vcs.dev) change ids in parens.
 
 ## Unreleased
 
+### Changes
+- Update miamlloc v3 to v3.6.1
+
 ### Fixed
 - On Rust 1.93 or later, precisely detect `cfg!(debug_assertions)` for the `debug-if-debug` feature
   - Before [cargo#16160], build-script detection was imperfect as cargo didn't set the appropriate environment variables

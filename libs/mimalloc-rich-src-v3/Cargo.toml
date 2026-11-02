@@ -4,7 +4,7 @@ name = "mimalloc-rich-src-v3"
 # The major version will increase if we change this rust crate in a backwards-incompatible manner.
 # This patch version gives us room to make up to 100 patch releases of our own
 # per upstream mimalloc patch release
-version = "1.5.300"
+version = "1.6.100"
 authors.workspace = true
 edition.workspace = true
 description = "Builds mimalloc v3 from vendored source code"
