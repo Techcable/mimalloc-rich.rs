@@ -15,6 +15,9 @@ Most changes include the relevant [jj](https://jj-vcs.dev) change ids in parens.
 ### Changes
 - Update miamlloc v3 to v3.6.1
 - Add `links = "mimalloc"` to mimalloc-rich-src (tuplmswo)
+- Automatically enable allocator API on Rust 1.100, removing `nightly-allocator-api` feature (zzqowmvy)
+  - This means we no longer support very old 1.100 nightlies,
+    which is fine since 1.100 is already in beta and will soon be stable.
 
 ### Fixed
 - On Rust 1.93 or later, precisely detect `cfg!(debug_assertions)` for the `debug-if-debug` feature
