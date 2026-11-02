@@ -2,7 +2,9 @@ import os
 import shlex
 import sys
 
-from invoke import Collection, task
+from invoke import Collection, Exit, task
+
+from scripts.update_mimalloc import main as update_mimalloc_main
 
 HAS_COLORS: bool = (
     sys.stderr.isatty() or os.getenv("CLICOLOR_FORCE")
@@ -94,7 +96,22 @@ def check_spelling(ctx, fix=False):
     ctx.run(f"uvx typos@{TYPOS_VER}" + maybe_write)
 
 
-ns = Collection(test, check, clippy, cargo_reedme, run_format, check_spelling)
+@task
+def update_mimalloc(ctx, v2="", v3="", dry_run=False):
+    """Update both mimalloc majors, or only the explicitly specified releases."""
+    args = []
+    for option, version in (("--v2", v2), ("--v3", v3)):
+        if version:
+            args.extend((option, version))
+    if dry_run:
+        args.append("--dry-run")
+    if update_mimalloc_main(args):
+        raise Exit(code=1)
+
+
+ns = Collection(
+    test, check, clippy, cargo_reedme, run_format, check_spelling, update_mimalloc
+)
 ns.configure(
     {
         "run": {
