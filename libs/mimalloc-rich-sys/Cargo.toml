@@ -13,6 +13,7 @@ repository.workspace = true
 license.workspace = true
 keywords.workspace = true
 categories.workspace = true
+links = "mimalloc"
 
 [package.metadata.cargo-shear]
 ignored = [
