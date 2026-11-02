@@ -12,7 +12,13 @@ use core::fmt::{Display, Formatter};
 pub use self::generated::*;
 
 mod generated {
-    #![allow(non_upper_case_globals, non_camel_case_types, non_snake_case, missing_docs)]
+    #![allow(
+        non_upper_case_globals,
+        non_camel_case_types,
+        non_snake_case,
+        missing_docs,
+        clippy::pub_underscore_fields
+    )]
     include!(concat!(env!("OUT_DIR"), "/mimalloc_bindings.rs"));
 }
 
