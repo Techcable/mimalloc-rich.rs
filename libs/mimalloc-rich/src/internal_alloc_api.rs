@@ -65,12 +65,12 @@ pub unsafe trait Allocator {
 }
 /// Implement all supported allocator by delegating to [`Allocator`].
 macro_rules! impl_public_allocator_traits {
-    (impl Allocator for $target:ident) => {
+    (impl Allocator for $target:ident $(<$l:lifetime>)?) => {
         #[cfg(has_allocator_api)]
         #[clippy::msrv = "1.100"]
         #[cfg_attr(test, deny(clippy::missing_trait_methods))]
         // SAFETY: The internal Allocator trait has the same requirements as us
-        unsafe impl core::alloc::Allocator for $target {
+        unsafe impl core::alloc::Allocator for $target $(<$l>)? {
             $crate::internal_alloc_api::impl_public_allocator_traits!(@delegate_common {
                 type Error = core::alloc::AllocError;
             });
@@ -78,7 +78,7 @@ macro_rules! impl_public_allocator_traits {
         #[cfg(feature = "allocator-api2-02")]
         #[cfg_attr(test, deny(clippy::missing_trait_methods))]
         // SAFETY: The internal Allocator trait has the same requirements as us
-        unsafe impl allocator_api2_02::alloc::Allocator for $target {
+        unsafe impl allocator_api2_02::alloc::Allocator for $target $(<$l>)? {
             $crate::internal_alloc_api::impl_public_allocator_traits!(@delegate_common {
                 type Error = allocator_api2_02::alloc::AllocError;
             });
@@ -87,7 +87,7 @@ macro_rules! impl_public_allocator_traits {
         #[cfg(feature = "allocator-api2-03")]
         #[cfg_attr(test, deny(clippy::missing_trait_methods))]
         // SAFETY: The internal Allocator trait has the same requirements as us
-        unsafe impl allocator_api2_03::alloc::Allocator for $target {
+        unsafe impl allocator_api2_03::alloc::Allocator for $target $(<$l>)? {
             $crate::internal_alloc_api::impl_public_allocator_traits!(@delegate_common {
                 type Error = allocator_api2_03::alloc::AllocError;
             });
@@ -96,7 +96,7 @@ macro_rules! impl_public_allocator_traits {
         #[cfg(feature = "allocator-api2-04")]
         #[cfg_attr(test, deny(clippy::missing_trait_methods))]
         // SAFETY: The internal Allocator trait has the same requirements as us
-        unsafe impl allocator_api2_04::alloc::Allocator for $target {
+        unsafe impl allocator_api2_04::alloc::Allocator for $target $(<$l>)? {
             $crate::internal_alloc_api::impl_public_allocator_traits!(@delegate_common {
                 type Error = allocator_api2_04::alloc::AllocError;
             });

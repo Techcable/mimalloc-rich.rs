@@ -10,7 +10,7 @@
 //! Changing certain options can invalidate the assumptions of other code.
 //! It is the responsibility of the user to ensure changing the options don't break anything
 //!
-//! As an example, [DuckLogic](https://ducklogic.org) uses the [`AllowVisitAbandoned`] option to visit memory allocated by
+//! As an example, [DuckLogic](https://ducklogic.org) uses the `AllowVisitAbandoned` option to visit memory allocated by
 //! dead threads.
 //! If this option is disabled, the garbage collector will not be able to properly trace these objects,
 //! violating memory safety.
@@ -46,20 +46,25 @@ pub trait MiFlagOption: MiRuntimeOption {
 macro_rules! declare_simple_flags {
     (
         $(
-            $(#[$meta_attr:meta])*
+            $(#[doc = $doc:literal])*
+            $(#[cfg($cond:meta)])?
             $name:ident as $ffi:ident
         ),+ $(,)?
     ) => {
         $(
-            $(#[$meta_attr])*
+            $(#[doc = $doc])*
+            $(#[cfg($cond)])?
+            $(#[cfg_attr(feature = "nightly-doc", doc(cfg($cond)))])?
             #[derive(Copy, Clone, Debug)]
             pub struct $name(pub bool);
+            $(#[cfg($cond)])?
             impl MiRuntimeOption for $name {
                 #[inline(always)]
                 fn ffi_id() -> sys::mi_option_t {
                     sys::mi_option_t::$ffi
                 }
             }
+            $(#[cfg($cond)])?
             impl sealed::PrivateMiOption for $name {
                 const NAME: &'static str = stringify!($name);
                 const KIND: OptionKind = OptionKind::Flag;
@@ -73,6 +78,7 @@ macro_rules! declare_simple_flags {
                     Ok($name(value))
                 }
             }
+            $(#[cfg($cond)])?
             impl MiFlagOption for $name {
                 #[inline]
                 fn to_bool(&self) -> bool {
@@ -100,20 +106,28 @@ declare_simple_flags!(
     /// Eagerly commit segments? (enabled by default).
     ///
     /// See also [`EagerCommitDelay`].
+    #[cfg(any(mimalloc1, mimalloc2))]
     EagerCommit as mi_option_eager_commit,
     /// Immediately purge delayed purges on thread termination.
+    #[cfg(any(mimalloc1, mimalloc2))]
     AbandonedPagePurge as mi_option_abandoned_page_purge,
     /// Do not use OS memory for allocation (but only programmatically reserved arenas)
     DisallowOsAlloc as mi_option_disallow_os_alloc,
     /// If enabled, do not use OS memory for allocation (but only pre-reserved arenas).
     LimitOsAlloc as mi_option_limit_os_alloc,
     /// Allow to reclaim an abandoned segment on a free (default true)
+    #[cfg(any(mimalloc1, mimalloc2))]
     AbandonedReclaimOnFree as mi_option_abandoned_reclaim_on_free,
     /// Extend purge delay on each subsequent delay (default true).
+    #[cfg(any(mimalloc1, mimalloc2))]
     PurgeExtendDelay as mi_option_purge_extend_delay,
     /// If true, do not use arena's for allocation (except if using specific arena id's)
     DisallowArenaAlloc as mi_option_disallow_arena_alloc,
     /// Allow visiting heap blocks from abandoned threads (default false).
+    ///
+    /// On mimalloc v3, this no longer does anything.
+    /// Its last functionality was removed in mimalloc commit c8c65741.
+    #[cfg(any(mimalloc1, mimalloc2))]
     AllowVisitAbandoned as mi_option_visit_abandoned,
     /// If set, release all memory on exit.
     ///
@@ -124,8 +138,8 @@ declare_simple_flags!(
 macro_rules! declare_enum_options {
     (
         $(
-            $(#[$primary_attr:meta])*
-
+            $(#[doc = $doc:literal])*
+            $(#[cfg($cond:meta)])?
             $target:ident {
                 $(
                     $(#[$variant_meta:meta])*
@@ -135,7 +149,9 @@ macro_rules! declare_enum_options {
         ),+ $(,)?
     ) => {
         $(
-            $(#[$primary_attr])*
+            $(#[doc = $doc])*
+            $(#[cfg($cond)])?
+            $(#[cfg_attr(feature = "nightly-doc", doc(cfg($cond)))])?
             #[derive(Copy, Clone, Debug, Eq, PartialEq)]
             pub enum $target {
                 $(
@@ -143,6 +159,7 @@ macro_rules! declare_enum_options {
                     $variant = $discriminant,
                 )*
             }
+            $(#[cfg($cond)])?
             impl sealed::PrivateMiOption for $target {
                 const NAME: &'static str = stringify!($target);
                 const KIND: OptionKind = OptionKind::U32;
@@ -165,6 +182,7 @@ macro_rules! declare_enum_options {
                     }
                 }
             }
+            $(#[cfg($cond)])?
             impl MiRuntimeOption for $target {
                 #[inline]
                 fn ffi_id() -> sys::mi_option_t {
@@ -192,7 +210,8 @@ declare_enum_options!(
 macro_rules! declare_complex_options {
     (
         $(
-            $(#[$meta_attr:meta])*
+            $(#[doc = $doc:literal])*
+            $(#[cfg($cond:meta)])?
             $name:ident {
                 $(#[$field_attr:meta])*
                 pub $field:ident: $tp:ty,
@@ -202,18 +221,22 @@ macro_rules! declare_complex_options {
         ),+ $(,)?
     ) => {
         $(
-            $(#[$meta_attr])*
+            $(#[doc = $doc])*
+            $(#[cfg($cond)])?
+            $(#[cfg_attr(feature = "nightly-doc", doc(cfg($cond)))])?
             #[derive(Copy, Clone, Debug)]
             pub struct $name {
                 $(#[$field_attr])*
                 pub $field: $tp,
             }
+            $(#[cfg($cond)])?
             impl MiRuntimeOption for $name {
                 #[inline]
                 fn ffi_id() -> sys::mi_option_t {
                     sys::mi_option_t::$ffi
                 }
             }
+            $(#[cfg($cond)])?
             impl sealed::PrivateMiOption for $name {
                 const NAME: &'static str = stringify!($name);
                 const KIND: OptionKind = $kind;
@@ -290,6 +313,7 @@ declare_complex_options!(
     },
     /// The first `segments` segments per thread are not eagerly committed,
     /// but per page in the segment on demand.
+    #[cfg(any(mimalloc1, mimalloc2))]
     EagerCommitDelay {
         /// Number of segments which should not be eagerly committed.
         pub segments: u32,
@@ -324,6 +348,7 @@ declare_complex_options!(
         },
     },
     /// Maximum percentage of the abandoned segments can be reclaimed per try (default 10%)
+    #[cfg(mimalloc2)] // missing from v1
     MaxSegmentReclaim {
         /// The percentage of segments to reclaim.
         ///
