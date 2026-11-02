@@ -44,8 +44,6 @@ debug-if-debug = ["mimalloc-rich-sys/debug-if-debug"]
 declare-global-allocator = []
 # Performs nightly specific optimizations
 nightly = []
-# Support the nightly allocator api
-nightly-allocator-api = []
 # Statically link against a vendored mimalloc
 #
 # This is currently required by mimalloc-sys-rich

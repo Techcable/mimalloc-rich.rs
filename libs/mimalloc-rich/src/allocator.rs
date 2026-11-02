@@ -3,7 +3,7 @@
 //! [`core::alloc::GlobalAlloc`],
 //! and [`allocator_api2::alloc::Allocator`].
 //!
-//! Implementing [`core::alloc::Allocator`] requires the `nightly-allocator-api` feature.
+//! Implementing [`core::alloc::Allocator`] requires Rust 1.100 or newer.
 //! Implementing [`allocator_api2::alloc::Allocator`] requires `allocator-api2-all` feature,
 //! which implements the trait for each supported version of `allocator-api2`.
 //!
