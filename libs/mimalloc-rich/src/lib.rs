@@ -15,11 +15,6 @@
 #![warn(missing_docs, future_incompatible)]
 #![allow(clippy::inline_always, reason = "sometimes appropriate for low-level code")]
 #![no_std]
-#![allow(
-    stable_features,
-    reason = "allocator-api decl kept for compatibility with older 1.100 nightlies"
-)]
-#![cfg_attr(feature = "nightly-allocator-api", feature(allocator_api))]
 
 use core::alloc::Layout;
 use core::ffi::c_void;

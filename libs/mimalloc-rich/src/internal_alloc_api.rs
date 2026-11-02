@@ -66,7 +66,8 @@ pub unsafe trait Allocator {
 /// Implement all supported allocator by delegating to [`Allocator`].
 macro_rules! impl_public_allocator_traits {
     (impl Allocator for $target:ident) => {
-        #[cfg(feature = "nightly-allocator-api")]
+        #[cfg(has_allocator_api)]
+        #[clippy::msrv = "1.100"]
         #[cfg_attr(test, deny(clippy::missing_trait_methods))]
         // SAFETY: The internal Allocator trait has the same requirements as us
         unsafe impl core::alloc::Allocator for $target {
@@ -160,9 +161,10 @@ impl From<crate::OutOfMemoryError> for AllocError {
     }
 }
 macro_rules! alloc_error_conversions {
-    ($(#[cfg($cond:meta)] $target:path),+ $(,)?) => {
+    ($(#[cfg($cond:meta)] $(#[$extra:meta])* $target:path),+ $(,)?) => {
         $(
         #[cfg($cond)]
+        $(#[$extra])*
         impl From<$target> for AllocError {
             #[inline]
             fn from(value: $target) -> Self {
@@ -171,6 +173,7 @@ macro_rules! alloc_error_conversions {
             }
         }
         #[cfg($cond)]
+        $(#[$extra])*
         impl From<AllocError> for $target {
             #[inline]
             fn from(_value: AllocError) -> Self {
@@ -178,6 +181,7 @@ macro_rules! alloc_error_conversions {
             }
         }
         #[cfg($cond)]
+        $(#[$extra])*
         impl From<crate::OutOfMemoryError> for $target {
             #[inline]
             fn from(value: crate::OutOfMemoryError) -> Self {
@@ -186,6 +190,7 @@ macro_rules! alloc_error_conversions {
             }
         }
         #[cfg($cond)]
+        $(#[$extra])*
         impl From<crate::ExpandError> for $target {
             #[inline]
             fn from(value: crate::ExpandError) -> Self {
@@ -197,8 +202,10 @@ macro_rules! alloc_error_conversions {
         )*
     }
 }
+#[cfg_attr(has_allocator_api, clippy::msrv = "1.100")]
 alloc_error_conversions!(
-    #[cfg(feature = "nightly-allocator-api")]
+    #[cfg(has_allocator_api)]
+    #[clippy::msrv = "1.100"]
     core::alloc::AllocError,
     #[cfg(feature = "allocator-api2-02")]
     allocator_api2_02::alloc::AllocError,
