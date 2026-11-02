@@ -83,8 +83,8 @@ pub fn main() -> anyhow::Result<()> {
 
 #[derive(Copy, Clone, Debug, Default)]
 enum Version {
-    #[default]
     V2 = 2,
+    #[default]
     V3 = 3,
 }
 macro_rules! version_info {
@@ -139,11 +139,11 @@ macro_rules! version_info {
 }
 version_info! {
     V2 => {
-        vendored_required_feature => "vendored",
+        vendored_required_feature => "force-mimalloc-v2",
         vendored_crate => mimalloc_rich_src_v2,
     },
     V3 => {
-        vendored_required_feature => "force-mimalloc-v3",
+        vendored_required_feature => "vendored",
         vendored_crate => mimalloc_rich_src_v3,
     }
 }

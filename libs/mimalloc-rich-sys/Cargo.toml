@@ -44,9 +44,9 @@ debug-full = []
 # Enable debug mode whenever cfg(debug_assertions) is enabled
 debug-if-debug = []
 # Force use of mimalloc v2
-force-mimalloc-v2 = []
+force-mimalloc-v2 = ["dep:mimalloc-rich-src-v2"]
 # Force use of mimalloc v3
-force-mimalloc-v3 = ["dep:mimalloc-rich-src-v3"]
+force-mimalloc-v3 = []
 # Override the C-library malloc function (off by default)
 #
 # For compatibility reasons, it is usually best to leave this off.
@@ -59,8 +59,7 @@ sanitize-address = []
 secure = []
 # Enable the `mi_visit_abandoned` flag at compile time.
 #
-# This flag is not documented by mimalloc in its camke file,
-# so may not be fully supported
+# This does nothing on mimalloc v3.
 unstable-enable-visit-abandoned = []
 # Enable support for valgrind, enabled by default if 'debug' is enabled.
 # Does nothing when valgrind is not being used
@@ -68,7 +67,7 @@ valgrind = []
 # Statically link against vendored mimalloc (default version)
 #
 # Currently, this is the only supported linking option
-vendored = ["dep:mimalloc-rich-src-v2"]
+vendored = ["dep:mimalloc-rich-src-v3"]
 
 [lints]
 workspace = true

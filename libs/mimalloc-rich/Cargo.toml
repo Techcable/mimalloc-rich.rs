@@ -11,12 +11,18 @@ license.workspace = true
 keywords.workspace = true
 categories.workspace = true
 
+[package.metadata.docs.rs]
+features = ["nightly-doc"]
+
 [[test]]
 name = "hashbrown"
 required-features = ["allocator-api2-02"]
 
 [dependencies]
+cfg-if = "1"
 mimalloc-rich-sys.workspace = true
+pastey = "0.2"
+static_assertions = "1"
 thiserror = "2"
 
 # Support all versions of allocator-api2, starting at v0.2
@@ -44,6 +50,8 @@ debug-if-debug = ["mimalloc-rich-sys/debug-if-debug"]
 declare-global-allocator = []
 # Performs nightly specific optimizations
 nightly = []
+# Use nightly documentation features
+nightly-doc = []
 # Statically link against a vendored mimalloc
 #
 # This is currently required by mimalloc-sys-rich
