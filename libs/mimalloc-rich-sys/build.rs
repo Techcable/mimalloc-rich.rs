@@ -52,6 +52,16 @@ pub fn main() -> anyhow::Result<()> {
     println!("cargo::rustc-link-search=native={}", result.library_dir.display());
     println!("cargo::rustc-link-lib=static={}", result.library_name);
 
+    // emit metadata
+    {
+        println!("cargo::metadata=MIMALLOC_VERSION={}", result.mimalloc_version);
+        println!(
+            "cargo::metadata=MIMALLOC_MAJOR_VERSION={}",
+            result.mimalloc_version.major_version()
+        );
+        println!("cargo::metadata=MIMALLOC_INCLUDE_DIR={}", result.include_dir.display());
+    }
+
     //
     // generate bindings
     //
