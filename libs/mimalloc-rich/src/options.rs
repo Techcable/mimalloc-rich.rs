@@ -532,11 +532,9 @@ mod sealed {
         #[inline]
         fn from_raw_value(value: c_long, kind: OptionKind) -> Result<Self, ConversionFromRawValueError> {
             assert_eq!(kind, OptionKind::Flag);
-            match value {
-                0 => Ok(false),
-                1 => Ok(true),
-                _ => Err(ConversionFromRawValueError),
-            }
+            // mimalloc considers any non-zero value enabled (see `mi_option_is_enabled`),
+            // and environment variables like `MIMALLOC_VERBOSE=2` can set other values
+            Ok(value != 0)
         }
 
         #[inline]
@@ -638,5 +636,19 @@ mod sealed {
                 }
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::sealed::{OptionKind, RawOptionValue};
+
+    #[test]
+    fn flag_from_raw_value() {
+        let get = |value| <bool as RawOptionValue>::from_raw_value(value, OptionKind::Flag).unwrap();
+        assert!(!get(0));
+        assert!(get(1));
+        assert!(get(2));
+        assert!(get(-1));
     }
 }
