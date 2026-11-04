@@ -85,7 +85,7 @@ def run_format(ctx, check=False):
 
 # pinned to avoid update breakage
 # keep in sync with CI
-TYPOS_VER = "1.50"
+TYPOS_VER = "1.52.0"
 
 
 @task(name="typos")
