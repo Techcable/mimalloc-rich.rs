@@ -40,7 +40,7 @@ pub trait MiRuntimeOption: Copy + Debug + PrivateMiOption {
 /// A [`MiRuntimeOption`] with a boolean value,
 /// where `true` means the option is enabled.
 pub trait MiFlagOption: MiRuntimeOption {
-    /// Convert this flag to a boolean/
+    /// Convert this flag to a boolean.
     fn to_bool(&self) -> bool;
 }
 macro_rules! declare_simple_flags {
@@ -324,7 +324,7 @@ declare_complex_options!(
     ///
     /// Use 0 for immediate purging or `None` for no purging at all. (default to 10)
     PurgeDelay {
-        /// The dealy purging delay in milliseconds,
+        /// The purging delay in milliseconds,
         /// or `None` if purging should not happen at all.
         ///
         /// Note that `0` and `None` have different meanings.
@@ -337,7 +337,7 @@ declare_complex_options!(
     },
     /// If `limit=None` use all available numa nodes, otherwise use at most `limit` nodes.
     UseNumaNodes {
-        /// The number of nodes to limit too, or `None` if there is no limit.
+        /// The number of nodes to limit to, or `None` if there is no limit.
         ///
         /// Note that zero is not a valid limit and will cause a panic.
         pub limit: Option<u32>,

@@ -97,8 +97,8 @@ pub fn mi_zalloc_aligned(layout: Layout) -> Result<NonNull<c_void>, OutOfMemoryE
 /// If newsize is larger than the original size allocated for p,
 /// the bytes after size are uninitialized.
 ///
-/// Returns null if out-of-memory.
-/// If null is returned, the original memory is not freed.
+/// Returns an [`OutOfMemoryError`] if out-of-memory.
+/// If an error is returned, the original memory is not freed.
 ///
 /// ## Safety
 /// Pointer must be previously allocated memory or null.
@@ -114,8 +114,8 @@ pub unsafe fn mi_realloc(ptr: *mut c_void, new_size: usize) -> Result<NonNull<c_
 /// If newsize is larger than the original size allocated for p,
 /// the bytes after size are uninitialized.
 ///
-/// Returns null if out-of-memory.
-/// If null is returned, the original memory is not freed.
+/// Returns an [`OutOfMemoryError`] if out-of-memory.
+/// If an error is returned, the original memory is not freed.
 ///
 /// ## Safety
 /// Pointer must be previously allocated memory or null.
@@ -139,8 +139,8 @@ pub unsafe fn mi_usable_size(ptr: *mut c_void) -> usize {
 
 /// An error that occurs calling [`mi_expand`].
 ///
-/// Triggered by b failing to expand in-place,
-/// which might happen even if there is otherwise sufficient mmeory to satisfy the request.
+/// Triggered by failing to expand in-place,
+/// which might happen even if there is otherwise sufficient memory to satisfy the request.
 #[derive(Debug, thiserror::Error)]
 #[error("Failed to expand allocation in-place")]
 #[non_exhaustive]
@@ -151,7 +151,7 @@ pub struct ExpandError;
 /// This supports expanding and shrinking memory.
 ///
 /// Returns a pointer to the re-allocated memory of `new_size` bytes (always equal to `ptr`),
-/// or [`AllocError`] if either out of memory or if the memory could not be expanded in place.
+/// or [`ExpandError`] if either out of memory or if the memory could not be expanded in place.
 ///
 /// If an error is returned, the pointer p is not freed.
 /// Otherwise, the original pointer is returned as the reallocated result.
@@ -161,8 +161,6 @@ pub struct ExpandError;
 ///
 /// Since the original pointer is never moved,
 /// this necessarily preserves the original alignment.
-///
-/// [`AllocError`]: core::alloc::AllocError
 ///
 /// ## Safety
 /// Pointer must be previously allocated memory or null.
@@ -174,9 +172,9 @@ pub unsafe fn mi_expand(ptr: *mut c_void, new_size: usize) -> Result<NonNull<c_v
 
 /// Re-allocate a zero-initialized block of memory with the specified size and alignment.
 ///
-/// If the pointer `p` is null, this behaves the same as [`mi_malloc_aligned`].
+/// If the pointer `p` is null, this behaves the same as [`mi_zalloc_aligned`].
 /// If newsize is larger than the original size allocated for p,
-/// the bytes after size are uninitialized.
+/// the bytes after the original size are zero-initialized.
 ///
 /// If an error is returned, the original memory is not freed.
 ///
@@ -193,7 +191,7 @@ pub unsafe fn mi_expand(ptr: *mut c_void, new_size: usize) -> Result<NonNull<c_v
 /// It might be undefined behavior.
 #[inline]
 pub unsafe fn mi_rezalloc_aligned(ptr: *mut c_void, layout: Layout) -> Result<NonNull<c_void>, OutOfMemoryError> {
-    // SAFETY: Caller guarantees old pointer is invalid and was originally zero-initialized
+    // SAFETY: Caller guarantees old pointer is valid and was originally zero-initialized
     unsafe { OutOfMemoryError::if_null(sys::mi_rezalloc_aligned(ptr, layout.size(), layout.align())) }
 }
 
@@ -213,7 +211,7 @@ pub unsafe fn mi_free(ptr: *mut c_void) {
     }
 }
 
-/// Eagerly free emory.
+/// Eagerly free memory.
 ///
 /// Regular code should not have to call this function.
 /// It can be beneficial in very narrow circumstances; in particular,

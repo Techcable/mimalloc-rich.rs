@@ -18,7 +18,7 @@ Most changes include the relevant [jj](https://jj-vcs.dev) change ids in parens.
 ### Changes
 - Add support for mimalloc v3 and make it the default version (vklkptmv)
   - Almost completely rewrites the heap API
-- Update miamlloc v3 to v3.6.1
+- Update mimalloc v3 to v3.6.1
 - Add `links = "mimalloc"` to mimalloc-rich-src (tuplmswo)
 - Automatically enable allocator API on Rust 1.100, removing `nightly-allocator-api` feature (zzqowmvy)
   - This means we no longer support very old 1.100 nightlies,
