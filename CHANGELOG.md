@@ -23,6 +23,9 @@ Most changes include the relevant [jj](https://jj-vcs.dev) change ids in parens.
 - Automatically enable allocator API on Rust 1.100, removing `nightly-allocator-api` feature (zzqowmvy)
   - This means we no longer support very old 1.100 nightlies,
     which is fine since 1.100 is already in beta and will soon be stable.
+- Mark `declare-global-allocator` feature with `discouraged` prefix (qlpzksly)
+  - This is not idiomatic, as the top-level binary or library should do the declaration itself.
+  - Not clear if there are any good use cases at all.
 
 ### Fixed
 - On Rust 1.93 or later, precisely detect `cfg!(debug_assertions)` for the `debug-if-debug` feature

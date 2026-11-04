@@ -47,7 +47,12 @@ debug = ["mimalloc-rich-sys/debug"]
 # Enable debug mode whenever cfg(debug_assertions) is enabled
 debug-if-debug = ["mimalloc-rich-sys/debug-if-debug"]
 # Declare MiMalloc as the #[global_allocator]
-declare-global-allocator = []
+#
+# This is generally discouraged,
+# as it is more idomatic to make the `#[global_allocator]` declaration yourself
+# in the top-level library/binary.
+# Make sure this is really what you want before you use it.
+discouraged-declare-global-allocator = []
 # Performs nightly specific optimizations
 nightly = []
 # Use nightly documentation features
