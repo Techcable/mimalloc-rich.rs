@@ -93,12 +93,11 @@ pub unsafe trait MiHeap: Debug + Sized + common::Sealed {
 
     /// Re-allocate a zero-initialized block of memory with the specified layout in this heap.
     ///
-    /// Similar to [`crate::mi_zalloc_aligned`], but specific to this heap.
+    /// Similar to [`crate::mi_rezalloc_aligned`], but specific to this heap.
+    /// See its documentation for when the new bytes are guaranteed to be zero.
     ///
     /// # Safety
     /// The original memory must be allocated from this heap.
-    /// Requires that the memory originally have been zero-initialized,
-    /// just like with [`crate::mi_rezalloc_aligned`].
     ///
     /// Must come from the heap's original thread,
     /// but this is guaranteed by `!Send`.
