@@ -401,7 +401,7 @@ unsafe extern "C" fn heap_visitor_trampoline<F: HeapVisitorFunc>(
 impl Drop for MiHeap {
     fn drop(&mut self) {
         // SAFETY: Heap no longer in use
-        unsafe { sys::mi_heap_destroy(self.as_ptr()) }
+        unsafe { sys::mi_heap_delete(self.as_ptr()) }
     }
 }
 impl Debug for MiHeap {
