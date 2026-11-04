@@ -33,6 +33,8 @@ Most changes include the relevant [jj](https://jj-vcs.dev) change ids in parens.
 - Run `mi_heap_delete` on drop (as documented) rather than `mi_heap_destroy` (xwzsmntp)
   - This would have been a serious bug, freeing all allocated memory while documentation said otherwise.
 - Ensure `<MiMalloc as GlobalAlloc>::realloc` respects alignment by using `mi_realloc_aligned` rather than plain `mi_realloc` (turxpuuu)
+- Treat any non-zero value of a flag option as enabled in `mi_option_get`, matching mimalloc (qknyznpz)
+  - Previously values other than `0` and `1` returned an `InvalidOptionGetError`
 
 [cargo#16160]: https://github.com/rust-lang/cargo/pull/16160
 
