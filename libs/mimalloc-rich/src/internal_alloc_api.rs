@@ -47,7 +47,12 @@ pub unsafe trait Allocator {
         // let new_layout = Layout::array::<u8>(24);
         // let ptr = MiMalloc.grow_zeroed(ptr.cast(), old_layout, new_layout).unwrap();
         // ```
-        // We don't know whether mimalloc supports this use-case, so we emulate it.
+        // mimalloc documents that this use-case is not supported (see the "zeroinit" group in mimalloc-doc.h):
+        // > The zero-initialized re-allocations are only valid on memory that was
+        // > originally allocated with zero initialization too,
+        // > e.g. `mi_calloc`, `mi_zalloc`, `mi_zalloc_aligned` etc.
+        // See also https://github.com/microsoft/mimalloc/issues/63#issuecomment-508272992
+        // As a result, we emulate it using `grow` and zeroing the new bytes.
         //
         // SAFETY: Caller guarantees validity of old pointer
         let new_memory = unsafe { self.grow(ptr, old_layout, new_layout) }?;
