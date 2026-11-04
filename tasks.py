@@ -34,7 +34,7 @@ def test(ctx):
 
 DEFAULT_DOC_FEATURES = [
     "mimalloc-rich/nightly-doc",
-    "mimalloc-rich/declare-global-allocator",
+    "mimalloc-rich/discouraged-declare-global-allocator",
 ]
 
 

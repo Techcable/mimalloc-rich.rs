@@ -16,7 +16,10 @@ use core::ptr::NonNull;
 use crate::internal_alloc_api::{AllocError, impl_public_allocator_traits};
 
 /// Sets mimalloc as the global allocator.
-#[cfg(feature = "declare-global-allocator")]
+///
+/// This is discouraged in favor of doing `#[global_allocator]`
+/// in your own top-level binary/library instead.
+#[cfg(feature = "discouraged-declare-global-allocator")]
 #[global_allocator]
 pub static GLOBAL: MiMalloc = self::MiMalloc;
 
