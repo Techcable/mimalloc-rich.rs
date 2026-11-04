@@ -25,7 +25,7 @@ categories = ["api-bindings", "memory-management", "no-std", "no-std::no-alloc"]
 bindgen = "0.73"
 cmake = "0.1"
 
-# utiltiies (only used for build)
+# utilities (only used for build)
 
 itertools = "0.15"
 

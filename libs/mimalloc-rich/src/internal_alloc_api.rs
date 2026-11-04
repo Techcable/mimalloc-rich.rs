@@ -43,9 +43,9 @@ pub unsafe trait Allocator {
         // The core::alloc::Allocator interface requires that the following code is well-defined:
         // ```
         // let old_layout = Layout::array::<u8>(12);
-        // let ptr = MiMalloc.allocate().unwrap();
+        // let ptr = MiMalloc.allocate(old_layout).unwrap();
         // let new_layout = Layout::array::<u8>(24);
-        // let ptr = MiMalloc.allocate_zeroed(ptr, new_layout).unwrap();
+        // let ptr = MiMalloc.grow_zeroed(ptr.cast(), old_layout, new_layout).unwrap();
         // ```
         // We don't know whether mimalloc supports this use-case, so we emulate it.
         //
@@ -150,7 +150,7 @@ macro_rules! impl_public_allocator_traits {
 /// Counterpart for [`core::alloc::AllocError`] used with [`Allocator`]
 ///
 /// Does not implement [`core::error::Error`],
-/// as it should be immediately
+/// as it should be immediately converted into the public `AllocError` type.
 #[derive(Clone, Debug)]
 #[allow(unused, reason = "see Allocator trait")]
 pub struct AllocError;

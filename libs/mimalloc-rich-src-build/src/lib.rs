@@ -1,5 +1,5 @@
 //! Build code for vendored mimalloc,
-//! hared across all versions.
+//! shared across all versions.
 //!
 //! This crate is currently considered an implementation detail of the `mimalloc-sys` crate.
 //! As such, its contents may change without notice.
