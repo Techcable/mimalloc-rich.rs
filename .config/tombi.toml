@@ -1,6 +1,6 @@
 [files]
 exclude = [
-    "crates/vendored-src-*/mimalloc-*",
+    "libs/mimalloc-rich-src-v*/mimalloc-*"
 ]
 
 [format.rules]
