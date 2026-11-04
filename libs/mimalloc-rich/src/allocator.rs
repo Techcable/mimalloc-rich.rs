@@ -69,9 +69,15 @@ unsafe impl core::alloc::GlobalAlloc for MiMalloc {
 
     #[inline]
     unsafe fn realloc(&self, ptr: *mut u8, layout: Layout, new_size: usize) -> *mut u8 {
-        let _ = layout; // not needed
-        // SAFETY: Validity guaranteed by caller, alignment cannot change as we have only have a `new_size`
-        let res = unsafe { crate::mi_realloc(ptr.cast(), new_size) };
+        // SAFETY: Caller guarantees that layout will not overflow and alignment is valid
+        let new_layout = unsafe {
+            Layout::from_size_align_unchecked(new_size, layout.align())
+        };
+        // SAFETY: Validity guaranteed by caller,
+        // we know that alignment will not change
+        let res = unsafe {
+            crate::mi_realloc_aligned(ptr.cast(), new_layout)
+        };
         res.map_or(core::ptr::null_mut(), NonNull::as_ptr).cast()
     }
 }
