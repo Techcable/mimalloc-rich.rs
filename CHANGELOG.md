@@ -22,6 +22,8 @@ Most changes include the relevant [jj](https://jj-vcs.dev) change ids in parens.
 ### Fixed
 - On Rust 1.93 or later, precisely detect `cfg!(debug_assertions)` for the `debug-if-debug` feature
   - Before [cargo#16160], build-script detection was imperfect as cargo didn't set the appropriate environment variables
+- Run `mi_heap_delete` on drop (as documented) rather than `mi_heap_destroy` (xwzsmntp)
+  - This would have been a serious bug, freeing all allocated memory while documentation said otherwise.
 
 [cargo#16160]: https://github.com/rust-lang/cargo/pull/16160
 
