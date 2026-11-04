@@ -277,7 +277,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - name: Run typos (pinned version)
-        uses: crate-ci/typos@v1.50.3
+        uses: crate-ci/typos@v1.52.0
 
   rustfmt:
     # Only run on PRs if the source branch is on someone else's repo
