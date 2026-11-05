@@ -179,7 +179,9 @@ pub unsafe fn mi_expand(ptr: *mut c_void, new_size: usize) -> Result<NonNull<c_v
 /// The [mimalloc documentation] only supports this on memory that was originally zero-initialized,
 /// e.g. by [`mi_zalloc_aligned`] (see also [microsoft/mimalloc#63]).
 /// Otherwise, the bytes after the original size are not guaranteed to be zero.
-/// This means this function can not be used to implement [`core::alloc::Allocator::grow_zeroed`].
+/// This is because mimalloc tracks the [usable size](mi_usable_size) of a block, not the requested size,
+/// so it cannot know whether the bytes in between were zeroed.
+/// As a result, this function can not be used to implement [`core::alloc::Allocator::grow_zeroed`].
 ///
 /// ## Safety
 /// The original pointer must be correctly allocated,
