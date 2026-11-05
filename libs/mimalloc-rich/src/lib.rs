@@ -176,24 +176,9 @@ pub unsafe fn mi_expand(ptr: *mut c_void, new_size: usize) -> Result<NonNull<c_v
 ///
 /// If an error is returned, the original memory is not freed.
 ///
-/// ## Zero-initialization
-/// mimalloc only zeroes the bytes past the [usable size](mi_usable_size) of the original block.
-/// Bytes between the original size and the usable size are preserved as-is,
-/// and if the new size fits in the original block it is returned without zeroing anything.
-/// As a result, the bytes after the original size are only guaranteed to be zero
-/// if they were already zero in the original block, up to its usable size.
-///
-/// The [mimalloc documentation] states this more conservatively:
-/// > The zero-initialized re-allocations are only valid on memory that was
-/// > originally allocated with zero initialization too,
-/// > e.g. `mi_calloc`, `mi_zalloc`, `mi_zalloc_aligned` etc.
-///
-/// See also [microsoft/mimalloc#63](https://github.com/microsoft/mimalloc/issues/63#issuecomment-508272992).
-///
-/// Even memory from [`mi_zalloc_aligned`] does not always satisfy this.
-/// Shrinking may happen in place, preserving the bytes past the new size,
-/// so a subsequent grow can expose previously written data.
-///
+/// The [mimalloc documentation] only supports this on memory that was originally zero-initialized,
+/// e.g. by [`mi_zalloc_aligned`] (see also [microsoft/mimalloc#63]).
+/// Otherwise, the bytes after the original size are not guaranteed to be zero.
 /// This means this function can not be used to implement [`core::alloc::Allocator::grow_zeroed`].
 ///
 /// ## Safety
@@ -202,10 +187,10 @@ pub unsafe fn mi_expand(ptr: *mut c_void, new_size: usize) -> Result<NonNull<c_v
 ///
 /// Calling this on memory that was not zero-initialized is not undefined behavior by itself.
 /// However, the bytes after the original size may then be non-zero or uninitialized,
-/// so assuming they are zero (or initialized) is undefined behavior
-/// unless the conditions described above are met.
+/// so assuming they are zero (or initialized) is undefined behavior.
 ///
 /// [mimalloc documentation]: https://microsoft.github.io/mimalloc/group__zeroinit.html
+/// [microsoft/mimalloc#63]: https://github.com/microsoft/mimalloc/issues/63#issuecomment-508272992
 #[inline]
 pub unsafe fn mi_rezalloc_aligned(ptr: *mut c_void, layout: Layout) -> Result<NonNull<c_void>, OutOfMemoryError> {
     // SAFETY: Caller guarantees old pointer is valid
