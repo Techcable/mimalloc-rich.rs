@@ -94,7 +94,8 @@ pub unsafe trait MiHeap: Debug + Sized + common::Sealed {
     /// Re-allocate a zero-initialized block of memory with the specified layout in this heap.
     ///
     /// Similar to [`crate::mi_rezalloc_aligned`], but specific to this heap.
-    /// See its documentation for when the new bytes are guaranteed to be zero.
+    /// In particular, there are similar issues when calling `rezalloc_aligned` on a section of
+    /// memory not originally zero-initialized.
     ///
     /// # Safety
     /// The original memory must be allocated from this heap.
@@ -102,9 +103,10 @@ pub unsafe trait MiHeap: Debug + Sized + common::Sealed {
     /// Must come from the heap's original thread,
     /// but this is guaranteed by `!Send`.
     ///
-    /// Calling this on memory that was not zero-initialized is not undefined behavior by itself.
-    /// However, the bytes after the original size may then be non-zero or uninitialized,
-    /// so assuming they are zero (or initialized) is undefined behavior.
+    /// As discussed in [`crate::mi_rezalloc_aligned`], calling this on memory that was not
+    /// zero-initialized is not undefined behavior by itself.
+    /// However, some of the bytes after the originally requested size may then be non-zero or uninitialized,
+    /// so assuming they are zero or initialized is undefined behavior.
     unsafe fn rezalloc_aligned(&self, ptr: *mut c_void, layout: Layout) -> Result<NonNull<c_void>, OutOfMemoryError>;
 
     /// Free memory allocated in this heap.
