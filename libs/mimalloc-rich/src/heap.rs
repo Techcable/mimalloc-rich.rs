@@ -101,6 +101,10 @@ pub unsafe trait MiHeap: Debug + Sized + common::Sealed {
     ///
     /// Must come from the heap's original thread,
     /// but this is guaranteed by `!Send`.
+    ///
+    /// Calling this on memory that was not zero-initialized is not undefined behavior by itself.
+    /// However, the bytes after the original size may then be non-zero or uninitialized,
+    /// so assuming they are zero (or initialized) is undefined behavior.
     unsafe fn rezalloc_aligned(&self, ptr: *mut c_void, layout: Layout) -> Result<NonNull<c_void>, OutOfMemoryError>;
 
     /// Free memory allocated in this heap.
