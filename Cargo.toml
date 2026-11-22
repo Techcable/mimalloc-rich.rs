@@ -3,8 +3,6 @@ resolver = "3"
 members = ["libs/*"]
 
 [workspace.package]
-# Make sure to bump vendored src crate patch versions
-# whenever this crate has an incompatible prerelease version
 version = "0.1.0-alpha.1"
 authors = ["Techcable <Techcable@techcable.net>"]
 edition = "2024"

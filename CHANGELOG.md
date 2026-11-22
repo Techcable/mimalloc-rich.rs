@@ -33,6 +33,10 @@ Most changes include the relevant [jj](https://jj-vcs.dev) change ids in parens.
 - Pass raw heap pointer to `HeapVisitorFunc` rather than a `&MiLocalHeap` (mtxxwkmw)
   - On v1/v2, this fixes undefined behavior since `mi_abandoned_visit_blocks` always passes a `NULL` heap to callback
   - Helps indicate that not all heap operations are permitted
+- Have mimalloc-rich-src-v2/v3 expose only plain data (source path & versions) instead of a `build` function (qylsmxlx)
+  - mimalloc-rich-sys now calls mimalloc-rich-src-build directly,
+    so changes to the build code are never a breaking change for the vendored source crates
+  - The new src releases (`mimalloc-rich-src-v2@1.5.201`, `mimalloc-rich-src-v3@1.6.102`) are incompatible with the alpha versions of mimalloc-rich-sys
 
 ### Fixed
 - On Rust 1.93 or later, precisely detect `cfg!(debug_assertions)` for the `debug-if-debug` feature (ozpzrkur)

@@ -123,7 +123,15 @@ macro_rules! version_info {
                     $(Version::$version => {
                         cfg_if::cfg_if! {
                             if #[cfg(feature = $vendored_required_feature)] {
-                                $vendored_crate::build(opts, ctx)
+                                // The vendored crate only provides plain data,
+                                // so changes to `mimalloc-rich-src-build` are never breaking for it.
+                                let source = mimalloc_rich_src_build::VendoredSource {
+                                    source_root: $vendored_crate::vendored_source_root().to_path_buf(),
+                                    vendored_crate_name: $vendored_crate::CRATE_NAME,
+                                    vendored_crate_version: $vendored_crate::CRATE_VERSION,
+                                    expected_version: $vendored_crate::MIMALLOC_VERSION.into(),
+                                };
+                                mimalloc_rich_src_build::build::build(&source, opts, ctx)
                             } else {
                                 panic!(
                                     "Vendored mimalloc {self} not available unless `feature = {name}` is enabled",
