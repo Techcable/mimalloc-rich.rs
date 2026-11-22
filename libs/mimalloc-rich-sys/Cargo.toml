@@ -1,8 +1,8 @@
 [package]
 name = "mimalloc-rich-sys"
-# This version should stay mostly in sync with the main crate version.
-# We add build tag to indicate what the native library version is.
-# This mirrors libgit2-sys behavior
+# This version stays in sync with the main crate version.
+# It doesn't use a build tag to indicate what the vendored library version is,
+# as that is determined by the version of the mimalloc-rich-src-* library.
 version.workspace = true
 authors.workspace = true
 edition.workspace = true
