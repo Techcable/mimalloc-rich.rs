@@ -12,6 +12,12 @@ Most changes include the relevant [jj](https://jj-vcs.dev) change ids in parens.
 
 ## Unreleased
 
+## v0.1.0-beta.2 - 2026-11-22
+Support heap visiting on all versions.
+
+Done through new `MiOwnedHeap::visit_blocks` trait method.
+Moving to the trait method will break old v2 code that uses the inherent method.
+
 ### Added
 - Add `MiOwnedHeap::visit_blocks` method, allowing heap visiting on all versions (smznqtyo)
   - Add `MiSyncHeap::visit_abandoned_blocks` method for v3
@@ -19,6 +25,12 @@ Most changes include the relevant [jj](https://jj-vcs.dev) change ids in parens.
 ### Changes
 - Bump vendored sources to v3.7.0 and v2.5.3 (rqtnmzpw)
 - On v1/v2, move existing `MiLocalHeap::visit_blocks` function to `MiOwnedHeap` trait (smznqtyo)
+
+### Associated Versions
+- `mimalloc@3.7.0`
+- `mimalloc@2.5.3`
+- `mimalloc-rich-src-v3@1.7.0`
+- `mimalloc-rich-src-v2@1.5.300`
 
 ## v0.1.0-beta.1 - 2026-11-22
 Support mimalloc v3 and rewrite the heap API.

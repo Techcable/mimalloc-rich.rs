@@ -3,7 +3,7 @@ resolver = "3"
 members = ["libs/*"]
 
 [workspace.package]
-version = "0.1.0-beta.1"
+version = "0.1.0-beta.2"
 authors = ["Techcable <Techcable@techcable.net>"]
 edition = "2024"
 # 1.81 - core::error::Error, #[expect(.., reason = "...")]
