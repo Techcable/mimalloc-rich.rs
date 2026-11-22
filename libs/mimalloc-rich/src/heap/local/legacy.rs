@@ -44,9 +44,15 @@ impl MiLocalHeap<'static> {
 ///
 /// Unless otherwise stated, functionality behaves the same as [`MiLocalHeap::visit_blocks`].
 /// Wraps [`sys::mi_abandoned_visit_blocks`].
+///
+/// # Safety
+/// Must not free or reallocate any of the memory that is being visited.
+///
+/// Since this is v1/v2, and there are no first-class heaps,
+/// the other safety requirements of [`MiLocalHeap::visit_blocks`] aren't applicable,
 #[inline]
 #[cfg_attr(feature = "nightly-doc", doc(cfg(any(mimalloc1, mimalloc2))))]
-pub fn mi_abandoned_visit_blocks<F: HeapVisitorFunc>(
+pub unsafe fn mi_abandoned_visit_blocks<F: HeapVisitorFunc>(
     subproc_id: MiSubprocId,
     heap_tag: Option<HeapTag>,
     visit_blocks: bool,
@@ -117,8 +123,26 @@ impl MiLocalHeap<'_> {
     /// let _: ControlFlow<()> = heap.visit_blocks(true, &mut callback);
     /// # }
     /// ```
+    ///
+    /// # Safety
+    /// While visiting a heap, operations that mutate the heap, allocate from it,
+    /// or free its memory are undefined behavior.
+    /// It is the callers requirement to ensure that this requirement is met.
+    ///
+    /// This fact is explicitly documented in mimalloc v3, but is true for v1/v2 as well.
+    ///
+    /// The visit function itself must be `unsafe` since allocation from a heap is safe.
+    /// Safe abstractions like [`Box`] with a custom allocator (`Box<T, &MiLocalHeap>`) could also free memory.
+    /// While a `&mut Self` reference might be able to enforce these requirements,
+    /// it would likely require the caller to use a [`RefCell`] or [`UnsafeCell`].
+    /// This would slow down every access or risk additional undefined behavior.
+    ///
+    /// [`Box`]: https://doc.rust-lang.org/std/boxed/struct.Box.html
+    /// [`mi_free`]: crate::mi_free
+    /// [`RefCell`]: core::cell::RefCell
+    /// [`UnsafeCell`]: core::cell::UnsafeCell
     #[inline] // type-specialized
-    pub fn visit_blocks<F: HeapVisitorFunc>(&self, visit_all_blocks: bool, visitor: &mut F) -> ControlFlow<()> {
+    pub unsafe fn visit_blocks<F: HeapVisitorFunc>(&self, visit_all_blocks: bool, visitor: &mut F) -> ControlFlow<()> {
         // SAFETY: Should be safe to visit, trampoline implemented correctly
         let all_visited = unsafe {
             sys::mi_heap_visit_blocks(

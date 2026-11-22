@@ -136,22 +136,28 @@ mod local {
         let heap = MiLocalHeap::new().unwrap();
         let ptrs: [NonNull<u8>; COUNT] = core::array::from_fn(|i| alloc_filled(&heap, SIZE, u8::try_from(i).unwrap()));
         let mut found = 0usize;
-        let res = heap.visit_blocks(true, &mut |_heap: &MiLocalHeap, _area, block: *mut c_void, size| {
-            if !block.is_null() && ptrs.iter().any(|p| p.as_ptr().cast() == block) {
-                assert!(size >= SIZE);
-                found += 1;
-            }
-            ControlFlow::Continue(())
-        });
+        // SAFETY: Does not mutate the heap or its memory
+        let res = unsafe {
+            heap.visit_blocks(true, &mut |_heap, _area, block: *mut c_void, size| {
+                if !block.is_null() && ptrs.iter().any(|p| p.as_ptr().cast() == block) {
+                    assert!(size >= SIZE);
+                    found += 1;
+                }
+                ControlFlow::Continue(())
+            })
+        };
         assert_eq!(res, ControlFlow::Continue(()));
         assert_eq!(found, COUNT);
 
         // Breaking stops early
         let mut calls = 0usize;
-        let res = heap.visit_blocks(true, &mut |_heap: &MiLocalHeap, _area, _block, _size| {
-            calls += 1;
-            ControlFlow::Break(())
-        });
+        // SAFETY: Does not mutate the heap or its memory
+        let res = unsafe {
+            heap.visit_blocks(true, &mut |_heap: &MiLocalHeap, _area, _block, _size| {
+                calls += 1;
+                ControlFlow::Break(())
+            })
+        };
         assert_eq!(res, ControlFlow::Break(()));
         assert_eq!(calls, 1);
 

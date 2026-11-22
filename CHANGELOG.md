@@ -27,6 +27,9 @@ Most changes include the relevant [jj](https://jj-vcs.dev) change ids in parens.
 - Mark `declare-global-allocator` feature with `discouraged` prefix (qlpzksly)
   - This is not idiomatic, as the top-level binary or library should do the declaration itself.
   - Not clear if there are any good use cases at all.
+- Mark heap visitation functions as `unsafe` (tyslvulr)
+  - Not safe to mutate a heap, allocate memory from it, or free its memory while visitation is in progress
+  - These limitations are documented in v3, but also true for v1/v2.
 
 ### Fixed
 - On Rust 1.93 or later, precisely detect `cfg!(debug_assertions)` for the `debug-if-debug` feature (ozpzrkur)
