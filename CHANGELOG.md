@@ -14,6 +14,7 @@ Most changes include the relevant [jj](https://jj-vcs.dev) change ids in parens.
 
 ### Added
 - Have mimalloc-rich-src emit version & include build metadata (sykvonmx)
+- Implement `Copy` and `Debug` for `MiMalloc` (ullxnsor)
 
 ### Changes
 - Add support for mimalloc v3 and make it the default version (vklkptmv)

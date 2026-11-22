@@ -24,7 +24,7 @@ use crate::internal_alloc_api::{AllocError, impl_public_allocator_traits};
 pub static GLOBAL: MiMalloc = self::MiMalloc;
 
 /// The mimalloc global allocator.
-#[derive(Default, Clone)]
+#[derive(Default, Copy, Clone, Debug)]
 pub struct MiMalloc;
 impl MiMalloc {
     /// Create a new instance of the allocator.
@@ -35,7 +35,7 @@ impl MiMalloc {
 
     #[inline]
     #[allow(clippy::unused_self)]
-    fn handle_alloc_res(&self, ptr: NonNull<c_void>, layout: Layout) -> NonNull<[u8]> {
+    fn handle_alloc_res(self, ptr: NonNull<c_void>, layout: Layout) -> NonNull<[u8]> {
         NonNull::slice_from_raw_parts(ptr.cast(), layout.size())
     }
 }
