@@ -4,3 +4,6 @@ extend-exclude = [
     ".git", # needed because we 'ignore-hidden'
     "libs/mimalloc-rich-src-v*/mimalloc-*",
 ]
+
+[default.extend-identifiers]
+miamlloc = "mimalloc"
