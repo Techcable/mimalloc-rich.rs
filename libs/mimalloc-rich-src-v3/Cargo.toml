@@ -7,12 +7,17 @@ name = "mimalloc-rich-src-v3"
 version = "1.6.101"
 authors.workspace = true
 edition.workspace = true
+rust-version.workspace = true
 description = "Builds mimalloc v3 from vendored source code"
 readme.workspace = true
 repository.workspace = true
 license.workspace = true
 keywords.workspace = true
 categories = ["api-bindings", "development-tools::build-utils"]
+exclude = [
+    "mimalloc-v3/doc",
+    "mimalloc-v3/docs",
+]
 
 [features]
 # unstable: Use the `git` command line to verify the version of the package
