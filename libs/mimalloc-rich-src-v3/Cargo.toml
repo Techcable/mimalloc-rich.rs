@@ -14,9 +14,12 @@ repository.workspace = true
 license.workspace = true
 keywords.workspace = true
 categories = ["api-bindings", "development-tools::build-utils"]
+# The doc directories and /contrib are not needed for the build or at runtime
+# The /bin directory has DLLs needed to implement MI_OVERRIDE on Windows
 exclude = [
     "mimalloc-v3/doc",
     "mimalloc-v3/docs",
+    "mimalloc-v3/contrib",
 ]
 
 [features]

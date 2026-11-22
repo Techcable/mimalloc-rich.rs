@@ -14,9 +14,11 @@ repository.workspace = true
 license.workspace = true
 keywords.workspace = true
 categories = ["api-bindings", "development-tools::build-utils"]
+# See src-v3 for why we make these particular choices
 exclude = [
     "mimalloc-v2/doc",
     "mimalloc-v2/docs",
+    "mimalloc-v2/contrib",
 ]
 
 [features]
