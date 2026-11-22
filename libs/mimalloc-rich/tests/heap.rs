@@ -4,9 +4,12 @@
 //! and tests for [`MiSyncHeap`] only run on mimalloc v3.
 
 use core::alloc::Layout;
+use core::ffi::c_void;
+use core::ops::ControlFlow;
 use core::ptr::NonNull;
 
 use mimalloc_rich::heap::{MiHeap, MiOwnedHeap};
+use mimalloc_rich::sys;
 
 /// Allocate a block of `len` bytes from the heap and fill it with `fill`.
 fn alloc_filled<H: MiHeap>(heap: &H, len: usize, fill: u8) -> NonNull<u8> {
@@ -87,14 +90,63 @@ fn check_delete_preserves_memory<H: MiOwnedHeap>(heap: H, delete: impl FnOnce(H)
     unsafe { mimalloc_rich::mi_free(ptr.as_ptr().cast()) };
 }
 
+/// Visit the blocks of a heap, checking that every block allocated by `alloc` is found.
+///
+/// Also checks that returning [`ControlFlow::Break`] stops visiting early.
+fn check_visit_blocks<H: MiOwnedHeap>(heap: &H, mut alloc: impl FnMut(usize, u8) -> NonNull<u8>) {
+    const COUNT: usize = 5;
+    const SIZE: usize = 48;
+    let ptrs: [NonNull<u8>; COUNT] = core::array::from_fn(|i| alloc(SIZE, u8::try_from(i).unwrap()));
+    let mut found = 0usize;
+    let mut areas = 0usize;
+    // SAFETY: Does not mutate the heap or its memory
+    let res = unsafe {
+        heap.visit_blocks(true, &mut |_heap, _area, block: *mut c_void, size| {
+            if block.is_null() {
+                areas += 1;
+            } else if ptrs.iter().any(|p| p.as_ptr().cast() == block) {
+                assert!(size >= SIZE);
+                found += 1;
+            }
+            ControlFlow::Continue(())
+        })
+    };
+    assert_eq!(res, ControlFlow::Continue(()));
+    assert_eq!(found, COUNT);
+    assert!(areas > 0, "never visited an area");
+
+    // Without visit_all_blocks, only areas are visited
+    // SAFETY: Does not mutate the heap or its memory
+    let res = unsafe {
+        heap.visit_blocks(false, &mut |_heap, _area, block: *mut c_void, _size| {
+            assert!(block.is_null(), "visited a block with visit_all_blocks=false");
+            ControlFlow::Continue(())
+        })
+    };
+    assert_eq!(res, ControlFlow::Continue(()));
+
+    // Breaking stops early
+    let mut calls = 0usize;
+    // SAFETY: Does not mutate the heap or its memory
+    let res = unsafe {
+        heap.visit_blocks(true, &mut |_heap: *const sys::mi_heap_t, _area, _block, _size| {
+            calls += 1;
+            ControlFlow::Break(())
+        })
+    };
+    assert_eq!(res, ControlFlow::Break(()));
+    assert_eq!(calls, 1);
+
+    for ptr in ptrs {
+        // SAFETY: Allocated from mimalloc and still valid
+        unsafe { mimalloc_rich::mi_free(ptr.as_ptr().cast()) };
+    }
+}
+
 #[cfg(any(mimalloc1, mimalloc2))]
 mod local {
-    use core::ffi::c_void;
-    use core::ops::ControlFlow;
-
     use mimalloc_rich::heap::local::HeapTag;
     use mimalloc_rich::heap::{MiLocalHeap, MiOwnedHeap};
-    use mimalloc_rich::sys;
 
     use super::*;
 
@@ -132,40 +184,8 @@ mod local {
 
     #[test]
     fn visit_blocks() {
-        const COUNT: usize = 5;
-        const SIZE: usize = 48;
         let heap = MiLocalHeap::new().unwrap();
-        let ptrs: [NonNull<u8>; COUNT] = core::array::from_fn(|i| alloc_filled(&heap, SIZE, u8::try_from(i).unwrap()));
-        let mut found = 0usize;
-        // SAFETY: Does not mutate the heap or its memory
-        let res = unsafe {
-            heap.visit_blocks(true, &mut |_heap, _area, block: *mut c_void, size| {
-                if !block.is_null() && ptrs.iter().any(|p| p.as_ptr().cast() == block) {
-                    assert!(size >= SIZE);
-                    found += 1;
-                }
-                ControlFlow::Continue(())
-            })
-        };
-        assert_eq!(res, ControlFlow::Continue(()));
-        assert_eq!(found, COUNT);
-
-        // Breaking stops early
-        let mut calls = 0usize;
-        // SAFETY: Does not mutate the heap or its memory
-        let res = unsafe {
-            heap.visit_blocks(true, &mut |_heap: *const sys::mi_heap_t, _area, _block, _size| {
-                calls += 1;
-                ControlFlow::Break(())
-            })
-        };
-        assert_eq!(res, ControlFlow::Break(()));
-        assert_eq!(calls, 1);
-
-        for ptr in ptrs {
-            // SAFETY: Allocated from mimalloc and still valid
-            unsafe { mimalloc_rich::mi_free(ptr.as_ptr().cast()) };
-        }
+        check_visit_blocks(&heap, |size, fill| alloc_filled(&heap, size, fill));
     }
 }
 
@@ -246,6 +266,86 @@ mod sync {
                 // SAFETY: Free from a different thread is allowed
                 unsafe { mimalloc_rich::mi_free(ptr.as_ptr().cast()) };
             }
+        }
+    }
+
+    #[test]
+    fn visit_blocks() {
+        let heap = MiSyncHeap::new().unwrap();
+        check_visit_blocks(&heap, |size, fill| alloc_filled(&heap, size, fill));
+    }
+
+    #[test]
+    fn visit_blocks_local() {
+        let heap = MiSyncHeap::new().unwrap();
+        check_visit_blocks(&heap, |size, fill| alloc_filled(&heap.local_heap(), size, fill));
+    }
+
+    /// Blocks owned by a live thread are not abandoned.
+    #[test]
+    fn visit_abandoned_blocks_skips_live() {
+        let heap = MiSyncHeap::new().unwrap();
+        let ptr = alloc_filled(&heap.local_heap(), 64, 0x33);
+        let mut found = false;
+        // SAFETY: Does not mutate the heap or its memory
+        let res = unsafe {
+            heap.visit_abandoned_blocks(true, &mut |_heap, _area, block: *mut c_void, _size| {
+                found |= block == ptr.as_ptr().cast();
+                ControlFlow::Continue(())
+            })
+        };
+        assert_eq!(res, ControlFlow::Continue(()));
+        assert!(!found, "live block visited as abandoned");
+        // SAFETY: Allocated from mimalloc
+        unsafe { mimalloc_rich::mi_free(ptr.as_ptr().cast()) };
+    }
+
+    /// Blocks allocated by a thread that has exited are abandoned,
+    /// and should be found by both visit functions.
+    #[test]
+    fn visit_abandoned_blocks() {
+        const COUNT: usize = 5;
+        const SIZE: usize = 64;
+        let heap = MiSyncHeap::new().unwrap();
+        let addrs: Vec<usize> = std::thread::scope(|s| {
+            s.spawn(|| {
+                (0..COUNT)
+                    .map(|i| alloc_filled(&heap.local_heap(), SIZE, u8::try_from(i).unwrap()).as_ptr() as usize)
+                    .collect()
+            })
+            .join()
+            .unwrap()
+        });
+
+        let check = |abandoned: bool| {
+            let mut found = 0usize;
+            let mut visitor = |_heap, _area: &sys::mi_heap_area_t, block: *mut c_void, size| {
+                if addrs.contains(&(block as usize)) {
+                    assert!(size >= SIZE);
+                    found += 1;
+                }
+                ControlFlow::Continue(())
+            };
+            let res = if abandoned {
+                // SAFETY: Does not mutate the heap or its memory,
+                // and no other threads are using the heap
+                unsafe { heap.visit_abandoned_blocks(true, &mut visitor) }
+            } else {
+                // SAFETY: Same as above
+                unsafe { heap.visit_blocks(true, &mut visitor) }
+            };
+            assert_eq!(res, ControlFlow::Continue(()));
+            assert_eq!(found, COUNT, "abandoned={abandoned}");
+        };
+        check(true);
+        check(false);
+
+        for (i, addr) in addrs.into_iter().enumerate() {
+            let ptr = NonNull::new(addr as *mut u8).unwrap();
+            // SAFETY: Allocated above and still valid
+            unsafe { assert_filled(ptr, SIZE, u8::try_from(i).unwrap()) };
+            // SAFETY: Allocated from mimalloc
+            unsafe { mimalloc_rich::mi_free(ptr.as_ptr().cast()) };
         }
     }
 }
