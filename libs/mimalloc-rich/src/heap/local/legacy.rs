@@ -45,6 +45,9 @@ impl MiLocalHeap<'static> {
 /// Unless otherwise stated, functionality behaves the same as [`MiLocalHeap::visit_blocks`].
 /// Wraps [`sys::mi_abandoned_visit_blocks`].
 ///
+/// Since the [theaps](MiLocalHeap) for dead threads have been freed,
+/// the `heap_ptr` parameter to the callback should always be null.
+///
 /// # Safety
 /// Must not free or reallocate any of the memory that is being visited.
 ///
@@ -80,16 +83,44 @@ pub unsafe fn mi_abandoned_visit_blocks<F: HeapVisitorFunc>(
     }
 }
 
-/// The visitor to the [`MiLocalHeap::visit_blocks`]  or [`mi_abandoned_visit_blocks`] function,
-/// with signature `fn(heap: &MiHeap, area: &sys::mi_heap_area_t, block: *mut c_void, block_size: usize) -> ControlFlow<()>`
+/// The visitor [closure](FnMut) passed to the [`MiLocalHeap::visit_blocks`]  or [`mi_abandoned_visit_blocks`] functions.
 ///
-/// This function is always first called for every area with block as a NULL pointer.
-/// If `visit_all_blocks` was true, the function is then called for every allocated block in that area.
+/// The closure signature matches that of the following function:
+/// ```no_run
+/// # use std::ffi::c_void;
+/// # use std::ops::ControlFlow;
+/// # use mimalloc_rich_sys as sys;
 ///
-/// Return [`ControlFlow::Break`] to stop visiting early.
+/// # trait Signature {
+/// fn callback(
+///     heap_ptr: *const sys::mi_heap_t,
+///     area: &sys::mi_heap_area_t,
+///     block: *mut c_void,
+///     block_size: usize
+/// ) -> ControlFlow<()>;
+/// # }
+/// ```
+///
+/// Return [`ControlFlow::Break`] to stop visiting.
+///
+/// # Safety
+/// The callback is itself safe to invoke, but the visit functions that use it are not.
+///
+/// The callback only receives a raw [`sys::mi_heap_t`] pointer
+/// instead of a reference because there are safety issues when mutating the heap.
+/// Additionally, when using [`mi_abandoned_visit_blocks`], the heap pointer is always `NULL`.
+///
+/// The `area` parameter is known to be both non-null and valid,
+/// so a reference can be used instead of a raw pointer.
 #[cfg_attr(feature = "nightly-doc", doc(cfg(any(mimalloc1, mimalloc2))))]
-pub trait HeapVisitorFunc: FnMut(&MiLocalHeap, &sys::mi_heap_area_t, *mut c_void, usize) -> ControlFlow<()> {}
-impl<F: FnMut(&MiLocalHeap, &sys::mi_heap_area_t, *mut c_void, usize) -> ControlFlow<()>> HeapVisitorFunc for F {}
+pub trait HeapVisitorFunc:
+    FnMut(*const sys::mi_heap_t, &sys::mi_heap_area_t, *mut c_void, usize) -> ControlFlow<()>
+{
+}
+impl<F: FnMut(*const sys::mi_heap_t, &sys::mi_heap_area_t, *mut c_void, usize) -> ControlFlow<()>> HeapVisitorFunc
+    for F
+{
+}
 
 #[cfg_attr(feature = "nightly-doc", doc(cfg(any(mimalloc1, mimalloc2))))]
 impl MiLocalHeap<'_> {
@@ -114,20 +145,21 @@ impl MiLocalHeap<'_> {
     /// #
     /// # fn do_visit_heap(heap: &MiLocalHeap) {
     /// use std::ops::ControlFlow;
-    /// let mut callback = |heap: &MiLocalHeap, area: &sys::mi_heap_area_t, block: *mut c_void, block_size: usize| {
+    /// let mut callback = |heap_ptr: *const sys::mi_heap_t, area: &sys::mi_heap_area_t, block: *mut c_void, block_size: usize| {
     ///     if !block.is_null() && block_size >= 100 {
     ///         return ControlFlow::Break(());
     ///     }
     ///     ControlFlow::Continue(())
     /// };
-    /// let _: ControlFlow<()> = heap.visit_blocks(true, &mut callback);
+    /// // SAFETY: The callback is well behaved (doesn't mutate anything)
+    /// let _: ControlFlow<()> = unsafe { heap.visit_blocks(true, &mut callback) };
     /// # }
     /// ```
     ///
     /// # Safety
     /// While visiting a heap, operations that mutate the heap, allocate from it,
     /// or free its memory are undefined behavior.
-    /// It is the callers requirement to ensure that this requirement is met.
+    /// It is the caller's responsibility to ensure this.
     ///
     /// This fact is explicitly documented in mimalloc v3, but is true for v1/v2 as well.
     ///
@@ -162,7 +194,7 @@ impl MiLocalHeap<'_> {
 
 /// Convert a rust-style [`HeapVisitorFunc`] to a C-style [`sys::mi_block_visit_fun`].
 ///
-/// ## Safety
+/// # Safety
 /// All arguments to trampoline must be correct,
 /// including `arg` which must point to a valid `&mut F`.
 unsafe extern "C" fn heap_visitor_trampoline<F: HeapVisitorFunc>(
@@ -172,22 +204,11 @@ unsafe extern "C" fn heap_visitor_trampoline<F: HeapVisitorFunc>(
     block_size: usize,
     arg: *mut c_void,
 ) -> bool {
-    // SAFETY: Assume `arg` points to `F`
+    // SAFETY: Assume `arg` points to a `F`, which is guaranteed by the caller
     let func = unsafe { &mut *arg.cast::<F>() };
-    // SAFETY: Caller guarantees that `heap` is valid
-    #[expect(unused_unsafe, reason = "multiple unsafe ops")]
-    unsafe {
-        MiLocalHeap::with_borrowed_ptr(heap.cast_mut(), |heap| {
-            func(
-                heap,
-                // SAFETY: Trust area to be non-null and type-accurate
-                unsafe { &*area },
-                block,
-                block_size,
-            )
-            .is_continue()
-        })
-    }
+    // SAFETY: Trust area to be type-accurate, but verify it is non-null
+    let area = unsafe { area.as_ref().expect("Null mi_heap_area_t") };
+    func(heap, area, block, block_size).is_continue()
 }
 
 /// Allocates a [`MiLocalHeap`] with custom options.

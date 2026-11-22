@@ -30,6 +30,9 @@ Most changes include the relevant [jj](https://jj-vcs.dev) change ids in parens.
 - Mark heap visitation functions as `unsafe` (tyslvulr)
   - Not safe to mutate a heap, allocate memory from it, or free its memory while visitation is in progress
   - These limitations are documented in v3, but also true for v1/v2.
+- Pass raw heap pointer to `HeapVisitorFunc` rather than a `&MiLocalHeap` (mtxxwkmw)
+  - On v1/v2, this fixes undefined behavior since `mi_abandoned_visit_blocks` always passes a `NULL` heap to callback
+  - Helps indicate that not all heap operations are permitted
 
 ### Fixed
 - On Rust 1.93 or later, precisely detect `cfg!(debug_assertions)` for the `debug-if-debug` feature (ozpzrkur)

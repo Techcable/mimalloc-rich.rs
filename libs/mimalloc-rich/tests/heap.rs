@@ -94,6 +94,7 @@ mod local {
 
     use mimalloc_rich::heap::local::HeapTag;
     use mimalloc_rich::heap::{MiLocalHeap, MiOwnedHeap};
+    use mimalloc_rich::sys;
 
     use super::*;
 
@@ -153,7 +154,7 @@ mod local {
         let mut calls = 0usize;
         // SAFETY: Does not mutate the heap or its memory
         let res = unsafe {
-            heap.visit_blocks(true, &mut |_heap: &MiLocalHeap, _area, _block, _size| {
+            heap.visit_blocks(true, &mut |_heap: *const sys::mi_heap_t, _area, _block, _size| {
                 calls += 1;
                 ControlFlow::Break(())
             })
