@@ -128,6 +128,8 @@ jobs:
         features:
           - "mimalloc-rich/vendored"
           - "mimalloc-rich/vendored mimalloc-rich/debug mimalloc-rich/discouraged-declare-global-allocator"
+          # mimalloc v2 compiles different code (e.g. heap/local/legacy.rs)
+          - "mimalloc-rich/vendored mimalloc-rich-sys/force-mimalloc-v2"
         include:
           - rust: nightly
             features: "mimalloc-rich/vendored mimalloc-rich/debug mimalloc-rich/discouraged-declare-global-allocator mimalloc-rich/nightly"
@@ -166,6 +168,8 @@ jobs:
           - stable
         features:
           - "mimalloc-rich/vendored mimalloc-rich/debug mimalloc-rich/discouraged-declare-global-allocator"
+          # mimalloc v2 compiles different code (e.g. heap/local/legacy.rs)
+          - "mimalloc-rich/vendored mimalloc-rich/debug mimalloc-rich/discouraged-declare-global-allocator mimalloc-rich-sys/force-mimalloc-v2"
         include:
           - rust: nightly
             features: "mimalloc-rich/vendored mimalloc-rich/debug mimalloc-rich/discouraged-declare-global-allocator mimalloc-rich/nightly"
