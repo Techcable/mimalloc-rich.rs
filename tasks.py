@@ -41,10 +41,13 @@ DEFAULT_DOC_FEATURES = [
 @task
 def check(ctx, format=True):
     clippy(ctx)
-    ctx.run(
-        "cargo +nightly doc --document-private-items --no-deps --workspace --features "
-        + ",".join(DEFAULT_DOC_FEATURES)
-    )
+    # check docs for both the default version (v3) and v2,
+    # since some code is only compiled on v2 (e.g. heap/local/legacy.rs)
+    for extra_features in [[], ["mimalloc-rich-sys/force-mimalloc-v2"]]:
+        ctx.run(
+            "cargo +nightly doc --document-private-items --no-deps --workspace --features "
+            + ",".join(DEFAULT_DOC_FEATURES + extra_features)
+        )
     ctx.run("cargo shear")
     ctx.run("cargo deny check")
     cargo_reedme(ctx, check=True)
