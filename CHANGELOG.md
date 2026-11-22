@@ -12,6 +12,11 @@ Most changes include the relevant [jj](https://jj-vcs.dev) change ids in parens.
 
 ## Unreleased
 
+## v0.1.0-beta.1 - 2026-11-22
+Support mimalloc v3 and rewrite the heap API.
+
+Issues #2 and #3 should be resolved before a full release.
+
 ### Added
 - Have mimalloc-rich-src emit version & include build metadata (sykvonmx)
 - Implement `Copy` and `Debug` for `MiMalloc` (ullxnsor)
@@ -51,6 +56,12 @@ Most changes include the relevant [jj](https://jj-vcs.dev) change ids in parens.
   - Previously values other than `0` and `1` returned an `InvalidOptionGetError`
 
 [cargo#16160]: https://github.com/rust-lang/cargo/pull/16160
+
+### Associated Versions
+- `mimalloc@3.6.1`
+- `mimalloc@2.5.2`
+- `mimalloc-rich-src-v3@1.6.102`
+- `mimalloc-rich-src-v2@1.5.201`
 
 ## 0.1.0-alpha.1 - 2026-09-30
 Split vendored sources into their own crate.
