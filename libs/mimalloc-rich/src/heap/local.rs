@@ -59,7 +59,7 @@ pub type mi_theap_t = self::theap::mi_theap_t;
 /// A thread-local heap.
 ///
 /// In mimalloc v2 this is owned and the lifetime always 'static.
-/// In mimalloc v3 this is bound to a particular [`crate::heap::MiSyncHeap`].
+/// In mimalloc v3 this is bound to a particular first-class heap (`MiSyncHeap`).
 ///
 /// # Thread Safety
 /// The heap is not thread safe to allocate from another thread, so is `!Sync`.

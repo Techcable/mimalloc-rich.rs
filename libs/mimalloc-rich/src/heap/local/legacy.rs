@@ -169,7 +169,7 @@ unsafe extern "C" fn heap_visitor_trampoline<F: HeapVisitorFunc>(
 /// Allocates a [`MiLocalHeap`] with custom options.
 ///
 /// Only available on mimalloc v1/v2,
-/// as mimalloc v3 creates heap at the [`MiSyncHeap`] level.
+/// as mimalloc v3 creates heap at the first-class (`MiSyncHeap`) level.
 ///
 /// TODO: Support custom `arena_id`.
 #[derive(Default)]
@@ -183,6 +183,8 @@ impl MiLocalHeapBuilder {
     ///
     /// Not allowing this allows the heap to reclaim memory from terminated threads.
     /// This defaults to `false`.
+    ///
+    /// [`MiLocalHeap::destroy]: crate::heap::MiOwnedHeap::destroy
     #[inline]
     pub fn allow_destroy(&mut self, allow: bool) -> &mut Self {
         self.allow_destroy = allow;
