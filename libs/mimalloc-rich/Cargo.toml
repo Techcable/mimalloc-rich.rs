@@ -11,6 +11,23 @@ license.workspace = true
 keywords.workspace = true
 categories.workspace = true
 
+[features]
+default = ["allocator-api2-all", "debug-if-debug", "vendored"]
+# Enable all supported version of allocator-api2
+allocator-api2-all = ["allocator-api2-02", "allocator-api2-03", "allocator-api2-04"]
+# Enable debug mode unconditionally
+debug = ["mimalloc-rich-sys/debug"]
+# Enable debug mode whenever cfg(debug_assertions) is enabled
+debug-if-debug = ["mimalloc-rich-sys/debug-if-debug"]
+# Declare MiMalloc as the #[global_allocator]
+declare-global-allocator = []
+# Performs nightly specific optimizations
+nightly = []
+# Statically link against a vendored mimalloc
+#
+# This is currently required by mimalloc-sys-rich
+vendored = ["mimalloc-rich-sys/vendored"]
+
 [[test]]
 name = "hashbrown"
 required-features = ["allocator-api2-02"]
@@ -31,23 +48,6 @@ hashbrown = "0.17"
 
 [build-dependencies]
 rustversion = "1"
-
-[features]
-default = ["allocator-api2-all", "debug-if-debug", "vendored"]
-# Enable all supported version of allocator-api2
-allocator-api2-all = ["allocator-api2-02", "allocator-api2-03", "allocator-api2-04"]
-# Enable debug mode unconditionally
-debug = ["mimalloc-rich-sys/debug"]
-# Enable debug mode whenever cfg(debug_assertions) is enabled
-debug-if-debug = ["mimalloc-rich-sys/debug-if-debug"]
-# Declare MiMalloc as the #[global_allocator]
-declare-global-allocator = []
-# Performs nightly specific optimizations
-nightly = []
-# Statically link against a vendored mimalloc
-#
-# This is currently required by mimalloc-sys-rich
-vendored = ["mimalloc-rich-sys/vendored"]
 
 [lints]
 workspace = true

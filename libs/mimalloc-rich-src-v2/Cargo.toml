@@ -19,14 +19,14 @@ exclude = [
     "mimalloc-v2/docs",
 ]
 
-[dependencies]
-anyhow = "1"
-mimalloc-rich-src-build.workspace = true
-
 [features]
 # unstable: Use the `git` command line to verify the version of the package
 # This only affects the build script
 unstable-verify-version-git = []
+
+[dependencies]
+anyhow = "1"
+mimalloc-rich-src-build.workspace = true
 
 [lints]
 workspace = true

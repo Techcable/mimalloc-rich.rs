@@ -14,14 +14,14 @@ license.workspace = true
 keywords.workspace = true
 categories = ["api-bindings", "development-tools::build-utils"]
 
-[dependencies]
-anyhow = "1"
-mimalloc-rich-src-build.workspace = true
-
 [features]
 # unstable: Use the `git` command line to verify the version of the package
 # This only affects the build script
 unstable-verify-version-git = []
+
+[dependencies]
+anyhow = "1"
+mimalloc-rich-src-build.workspace = true
 
 [lints]
 workspace = true

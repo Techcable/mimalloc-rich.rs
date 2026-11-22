@@ -22,19 +22,6 @@ ignored = [
     "mimalloc-rich-src-v3",
 ]
 
-[build-dependencies]
-anyhow = "1"
-# If we ever switch from bindgen to manual bindings,
-# use the ctest crate to ensure they match.
-bindgen.workspace = true
-cfg-if = "1"
-
-# vendored code & common build logic
-
-mimalloc-rich-src-build.workspace = true
-mimalloc-rich-src-v2 = { workspace = true, optional = true }
-mimalloc-rich-src-v3 = { workspace = true, optional = true }
-
 [features]
 default = ["debug-if-debug", "vendored"]
 # Enable debug mode unconditionally
@@ -69,6 +56,19 @@ valgrind = []
 #
 # Currently, this is the only supported linking option
 vendored = ["dep:mimalloc-rich-src-v2"]
+
+[build-dependencies]
+anyhow = "1"
+# If we ever switch from bindgen to manual bindings,
+# use the ctest crate to ensure they match.
+bindgen.workspace = true
+cfg-if = "1"
+
+# vendored code & common build logic
+
+mimalloc-rich-src-build.workspace = true
+mimalloc-rich-src-v2 = { workspace = true, optional = true }
+mimalloc-rich-src-v3 = { workspace = true, optional = true }
 
 [lints]
 workspace = true
