@@ -9,7 +9,7 @@
 use std::path::Path;
 
 /// The version of mimalloc that is vendored by this crate.
-pub const MIMALLOC_VERSION: &str = "2.5.2";
+pub const MIMALLOC_VERSION: &str = "2.5.3";
 
 /// The name of this crate, as seen by the compiler (`mimalloc_rich_src_v2`).
 ///

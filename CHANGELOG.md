@@ -12,6 +12,9 @@ Most changes include the relevant [jj](https://jj-vcs.dev) change ids in parens.
 
 ## Unreleased
 
+### Changes
+- Bump vendored sources to v3.7.0 and v2.5.3 (rqtnmzpw)
+
 ## v0.1.0-beta.1 - 2026-11-22
 Support mimalloc v3 and rewrite the heap API.
 
