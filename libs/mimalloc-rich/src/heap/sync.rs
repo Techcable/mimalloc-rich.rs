@@ -58,6 +58,17 @@ impl MiSyncHeap {
         // SAFETY: Trust the result of mi_heap_theap to valid
         unsafe { MiLocalHeap::from_raw_parts(local_heap, self.ptr) }
     }
+
+    super::common::common_code!(@visit_blocks {
+        /// Like [`Self::visit_blocks`], but for pages that have been abandoned.
+        ///
+        /// # Safety
+        /// Same requirements as [`Self::visit_blocks`].
+        ///
+        /// [`Self::visit_blocks`]: crate::heap::MiOwnedHeap::visit_blocks
+        #[inline]
+        pub unsafe fn visit_abandoned_blocks(...) => mi_heap_visit_abandoned_blocks
+    });
 }
 // SAFETY: The underlying type is thread-safe
 unsafe impl Sync for MiSyncHeap {}

@@ -1,11 +1,9 @@
 //! Code specific to mimalloc v1/v2.
 
-use core::ffi::{c_int, c_void};
+use core::ffi::c_int;
 use core::ops::ControlFlow;
 
-use sys::mi_heap_t;
-
-use crate::heap::{MiHeap, MiHeapAllocError, MiLocalHeap};
+use crate::heap::{HeapVisitorFunc, MiHeapAllocError, MiLocalHeap};
 use crate::subproc::MiSubprocId;
 
 #[cfg_attr(feature = "nightly-doc", doc(cfg(any(mimalloc1, mimalloc2))))]
@@ -61,6 +59,8 @@ pub unsafe fn mi_abandoned_visit_blocks<F: HeapVisitorFunc>(
     visit_blocks: bool,
     visitor: &mut F,
 ) -> ControlFlow<()> {
+    use crate::heap::common::heap_visitor_trampoline;
+
     let heap_tag: c_int = match heap_tag {
         None => -1,
         Some(val @ HeapTag(-1)) => panic!("Heap tag is ambiguous: {val:?}"),
@@ -81,134 +81,6 @@ pub unsafe fn mi_abandoned_visit_blocks<F: HeapVisitorFunc>(
     } else {
         ControlFlow::Break(())
     }
-}
-
-/// The visitor [closure](FnMut) passed to the [`MiLocalHeap::visit_blocks`]  or [`mi_abandoned_visit_blocks`] functions.
-///
-/// The closure signature matches that of the following function:
-/// ```no_run
-/// # use std::ffi::c_void;
-/// # use std::ops::ControlFlow;
-/// # use mimalloc_rich_sys as sys;
-///
-/// # trait Signature {
-/// fn callback(
-///     heap_ptr: *const sys::mi_heap_t,
-///     area: &sys::mi_heap_area_t,
-///     block: *mut c_void,
-///     block_size: usize
-/// ) -> ControlFlow<()>;
-/// # }
-/// ```
-///
-/// Return [`ControlFlow::Break`] to stop visiting.
-///
-/// # Safety
-/// The callback is itself safe to invoke, but the visit functions that use it are not.
-///
-/// The callback only receives a raw [`sys::mi_heap_t`] pointer
-/// instead of a reference because there are safety issues when mutating the heap.
-/// Additionally, when using [`mi_abandoned_visit_blocks`], the heap pointer is always `NULL`.
-///
-/// The `area` parameter is known to be both non-null and valid,
-/// so a reference can be used instead of a raw pointer.
-#[cfg_attr(feature = "nightly-doc", doc(cfg(any(mimalloc1, mimalloc2))))]
-pub trait HeapVisitorFunc:
-    FnMut(*const sys::mi_heap_t, &sys::mi_heap_area_t, *mut c_void, usize) -> ControlFlow<()>
-{
-}
-impl<F: FnMut(*const sys::mi_heap_t, &sys::mi_heap_area_t, *mut c_void, usize) -> ControlFlow<()>> HeapVisitorFunc
-    for F
-{
-}
-
-#[cfg_attr(feature = "nightly-doc", doc(cfg(any(mimalloc1, mimalloc2))))]
-impl MiLocalHeap<'_> {
-    /// Visit all areas and blocks in a heap.
-    ///
-    /// Only available on mimalloc v1/v2.
-    ///
-    /// If `visit_all_blocks=true`, this visits all allocated blocks.
-    /// Otherwise, the visitor is only called for every heap area.
-    ///
-    /// The callback arguments have the names `heap, area, block, block_size`,
-    /// and return a value of [`ControlFlow`].
-    ///
-    /// This function is always first called for every area with `block` as a NULL pointer.
-    /// If `visit_all_blocks` was true,
-    /// the function is then called for every allocated block in that area.
-    ///
-    /// ## Example
-    /// ```no_run
-    /// # use std::ffi::c_void;
-    /// # use mimalloc_rich::{sys, heap::MiLocalHeap};
-    /// #
-    /// # fn do_visit_heap(heap: &MiLocalHeap) {
-    /// use std::ops::ControlFlow;
-    /// let mut callback = |heap_ptr: *const sys::mi_heap_t, area: &sys::mi_heap_area_t, block: *mut c_void, block_size: usize| {
-    ///     if !block.is_null() && block_size >= 100 {
-    ///         return ControlFlow::Break(());
-    ///     }
-    ///     ControlFlow::Continue(())
-    /// };
-    /// // SAFETY: The callback is well behaved (doesn't mutate anything)
-    /// let _: ControlFlow<()> = unsafe { heap.visit_blocks(true, &mut callback) };
-    /// # }
-    /// ```
-    ///
-    /// # Safety
-    /// While visiting a heap, operations that mutate the heap, allocate from it,
-    /// or free its memory are undefined behavior.
-    /// It is the caller's responsibility to ensure this.
-    ///
-    /// This fact is explicitly documented in mimalloc v3, but is true for v1/v2 as well.
-    ///
-    /// The visit function itself must be `unsafe` since allocation from a heap is safe.
-    /// Safe abstractions like [`Box`] with a custom allocator (`Box<T, &MiLocalHeap>`) could also free memory.
-    /// While a `&mut Self` reference might be able to enforce these requirements,
-    /// it would likely require the caller to use a [`RefCell`] or [`UnsafeCell`].
-    /// This would slow down every access or risk additional undefined behavior.
-    ///
-    /// [`Box`]: https://doc.rust-lang.org/std/boxed/struct.Box.html
-    /// [`mi_free`]: crate::mi_free
-    /// [`RefCell`]: core::cell::RefCell
-    /// [`UnsafeCell`]: core::cell::UnsafeCell
-    #[inline] // type-specialized
-    pub unsafe fn visit_blocks<F: HeapVisitorFunc>(&self, visit_all_blocks: bool, visitor: &mut F) -> ControlFlow<()> {
-        // SAFETY: Should be safe to visit, trampoline implemented correctly
-        let all_visited = unsafe {
-            sys::mi_heap_visit_blocks(
-                self.as_ptr(),
-                visit_all_blocks,
-                Some(heap_visitor_trampoline::<F>),
-                core::ptr::from_mut::<F>(visitor).cast(),
-            )
-        };
-        if all_visited {
-            ControlFlow::Continue(())
-        } else {
-            ControlFlow::Break(())
-        }
-    }
-}
-
-/// Convert a rust-style [`HeapVisitorFunc`] to a C-style [`sys::mi_block_visit_fun`].
-///
-/// # Safety
-/// All arguments to trampoline must be correct,
-/// including `arg` which must point to a valid `&mut F`.
-unsafe extern "C" fn heap_visitor_trampoline<F: HeapVisitorFunc>(
-    heap: *const mi_heap_t,
-    area: *const sys::mi_heap_area_t,
-    block: *mut c_void,
-    block_size: usize,
-    arg: *mut c_void,
-) -> bool {
-    // SAFETY: Assume `arg` points to a `F`, which is guaranteed by the caller
-    let func = unsafe { &mut *arg.cast::<F>() };
-    // SAFETY: Trust area to be type-accurate, but verify it is non-null
-    let area = unsafe { area.as_ref().expect("Null mi_heap_area_t") };
-    func(heap, area, block, block_size).is_continue()
 }
 
 /// Allocates a [`MiLocalHeap`] with custom options.

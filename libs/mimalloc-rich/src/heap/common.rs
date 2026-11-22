@@ -1,3 +1,8 @@
+use core::ffi::c_void;
+
+use crate::heap::HeapVisitorFunc;
+use crate::sys;
+
 pub trait Sealed {}
 
 macro_rules! common_code {
@@ -103,9 +108,15 @@ macro_rules! common_code {
                     }
                 }
                 impl super::common::Sealed for $target $(<$l>)? {}
+
                 $(#[$owned_meta])*
                 // SAFETY: Correct impl simply delegates
                 unsafe impl crate::heap::MiOwnedHeap for $owned {
+                    crate::heap::common::common_code!(@visit_blocks {
+                        #[inline]
+                        unsafe fn visit_blocks(...) => mi_heap_visit_blocks
+                    });
+
                     #[inline]
                     unsafe fn destroy(self) {
                         let ptr = self.into_owned_ptr();
@@ -121,7 +132,6 @@ macro_rules! common_code {
                         unsafe { sys::mi_heap_delete(self.as_ptr()) }
                     }
                 }
-
             }
 
             impl Debug for $target $(<$l>)? {
@@ -199,6 +209,49 @@ macro_rules! common_code {
             crate::internal_alloc_api::impl_public_allocator_traits!(impl Allocator for $target $(<$l>)?);
         };
     };
+    (@visit_blocks  { $(#[$visit_meta:meta])* $v:vis unsafe fn $name:ident(...) => $raw:ident }) => {
+        $(#[$visit_meta])*
+        $v unsafe fn $name<F: crate::heap::HeapVisitorFunc>(&self, visit_all_blocks: bool, visitor: &mut F) -> core::ops::ControlFlow<()> {
+            use core::ops::ControlFlow;
+
+            use crate::heap::MiHeap;
+            use crate::heap::common::heap_visitor_trampoline;
+
+            // SAFETY: Caller guarantees safety of callback
+            let all_visited = unsafe {
+                sys::$raw(
+                    self.as_ptr(),
+                    visit_all_blocks,
+                    Some(heap_visitor_trampoline::<F>),
+                    core::ptr::from_mut::<F>(visitor).cast(),
+                )
+            };
+            if all_visited {
+                ControlFlow::Continue(())
+            } else {
+                ControlFlow::Break(())
+            }
+        }
+    };
 }
 
 pub(crate) use common_code;
+
+/// Convert a rust-style [`HeapVisitorFunc`] to a C-style [`sys::mi_block_visit_fun`].
+///
+/// # Safety
+/// All arguments to trampoline must be correct,
+/// including `arg` which must point to a valid `&mut F`.
+pub(crate) unsafe extern "C" fn heap_visitor_trampoline<F: HeapVisitorFunc>(
+    heap: *const sys::mi_heap_t,
+    area: *const sys::mi_heap_area_t,
+    block: *mut c_void,
+    block_size: usize,
+    arg: *mut c_void,
+) -> bool {
+    // SAFETY: Assume `arg` points to a `F`, which is guaranteed by the caller
+    let func = unsafe { &mut *arg.cast::<F>() };
+    // SAFETY: Trust area to be type-accurate, but verify it is non-null
+    let area = unsafe { area.as_ref().expect("Null mi_heap_area_t") };
+    func(heap, area, block, block_size).is_continue()
+}

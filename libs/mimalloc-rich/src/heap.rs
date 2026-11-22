@@ -10,6 +10,7 @@ use core::alloc::Layout;
 use core::ffi::c_void;
 use core::fmt::Debug;
 use core::mem::ManuallyDrop;
+use core::ops::ControlFlow;
 use core::ptr::NonNull;
 
 pub use self::local::MiLocalHeap;
@@ -144,6 +145,57 @@ pub unsafe trait MiHeap: Debug + Sized + common::Sealed {
 ///
 /// The design of the trait prevents use after free by safe code.
 pub unsafe trait MiOwnedHeap: MiHeap + 'static {
+    /// Visit all areas and blocks in a heap.
+    ///
+    /// If `visit_all_blocks=true`, this visits all allocated blocks.
+    /// Otherwise, the visitor is only called for every heap area.
+    ///
+    /// The callback arguments have the names `heap, area, block, block_size`,
+    /// and return a value of [`ControlFlow`].
+    ///
+    /// This function is always first called for every area with `block` as a NULL pointer.
+    /// If `visit_all_blocks` was true,
+    /// the function is then called for every allocated block in that area.
+    ///
+    /// ## Example
+    /// ```no_run
+    /// # use std::ffi::c_void;
+    /// # use mimalloc_rich::{sys, heap::MiLocalHeap};
+    /// # use mimalloc_rich::heap::MiOwnedHeap;
+    /// #
+    /// # fn do_visit_heap(heap: &impl MiOwnedHeap) {
+    /// use std::ops::ControlFlow;
+    /// let mut callback = |heap_ptr: *const sys::mi_heap_t, area: &sys::mi_heap_area_t, block: *mut c_void, block_size: usize| {
+    ///     if !block.is_null() && block_size >= 100 {
+    ///         return ControlFlow::Break(());
+    ///     }
+    ///     ControlFlow::Continue(())
+    /// };
+    /// // SAFETY: The callback is well behaved (doesn't mutate anything)
+    /// let _: ControlFlow<()> = unsafe { heap.visit_blocks(true, &mut callback) };
+    /// # }
+    /// ```
+    ///
+    /// # Safety
+    /// While visiting a heap, operations that mutate the heap, allocate from it,
+    /// or free its memory are undefined behavior.
+    /// In v3, other threads may not allocate from or free into this heap.
+    /// It is the caller's responsibility to ensure this.
+    ///
+    /// This fact is explicitly documented in mimalloc v3, but is true for v1/v2 as well.
+    ///
+    /// The visit function itself must be `unsafe` since allocation from a heap is safe.
+    /// Safe abstractions like [`Box`] with a custom allocator (`Box<T, &MiLocalHeap>`) could also free memory.
+    /// While a `&mut Self` reference might be able to enforce these requirements,
+    /// it would likely require the caller to use a [`RefCell`] or [`UnsafeCell`].
+    /// This would slow down every access or risk additional undefined behavior.
+    ///
+    /// [`Box`]: https://doc.rust-lang.org/std/boxed/struct.Box.html
+    /// [`mi_free`]: crate::mi_free
+    /// [`RefCell`]: core::cell::RefCell
+    /// [`UnsafeCell`]: core::cell::UnsafeCell
+    unsafe fn visit_blocks<F: HeapVisitorFunc>(&self, visit_all_blocks: bool, visitor: &mut F) -> ControlFlow<()>;
+
     /// Consume ownership of this heap,
     /// returning a raw pointer to the underlying type.
     ///
@@ -186,4 +238,46 @@ pub unsafe trait MiOwnedHeap: MiHeap + 'static {
     fn delete(self) {
         drop(self);
     }
+}
+
+/// The visitor [closure](FnMut) passed to the [`MiOwnedHeap::visit_blocks`] function.
+///
+/// On v2, this is also used for the `mi_abandoned_visit_blocks` function.
+/// On v3, this is also used for the [`MiSyncHeap::visit_abandoned_blocks`] function.
+///
+///
+/// The closure signature matches that of the following function:
+/// ```no_run
+/// # use std::ffi::c_void;
+/// # use std::ops::ControlFlow;
+/// # use mimalloc_rich_sys as sys;
+///
+/// # trait Signature {
+/// fn callback(
+///     heap_ptr: *const sys::mi_heap_t,
+///     area: &sys::mi_heap_area_t,
+///     block: *mut c_void,
+///     block_size: usize
+/// ) -> ControlFlow<()>;
+/// # }
+/// ```
+///
+/// Return [`ControlFlow::Break`] to stop visiting.
+///
+/// # Safety
+/// The callback is itself safe to invoke, but the visit functions that use it are not.
+///
+/// The callback only receives a raw [`sys::mi_heap_t`] pointer
+/// instead of a reference because there are safety issues when mutating the heap.
+/// Additionally, in v1/v2, when using `mi_abandoned_visit_blocks`, the heap pointer is always `NULL`.
+///
+/// The `area` parameter is known to be both non-null and valid,
+/// so a reference can be used instead of a raw pointer.
+pub trait HeapVisitorFunc:
+    FnMut(*const sys::mi_heap_t, &sys::mi_heap_area_t, *mut c_void, usize) -> ControlFlow<()>
+{
+}
+impl<F: FnMut(*const sys::mi_heap_t, &sys::mi_heap_area_t, *mut c_void, usize) -> ControlFlow<()>> HeapVisitorFunc
+    for F
+{
 }
