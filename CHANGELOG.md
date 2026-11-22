@@ -37,6 +37,8 @@ Most changes include the relevant [jj](https://jj-vcs.dev) change ids in parens.
   - mimalloc-rich-sys now calls mimalloc-rich-src-build directly,
     so changes to the build code are never a breaking change for the vendored source crates
   - The new src releases (`mimalloc-rich-src-v2@1.5.201`, `mimalloc-rich-src-v3@1.6.102`) are incompatible with the alpha versions of mimalloc-rich-sys
+- Stop building mimalloc's own test programs when building the vendored library by setting `MI_BUILD_TESTS=OFF` (ntwyqwsl)
+  - Speeds up builds and avoids failures from test programs that are never run
 
 ### Fixed
 - On Rust 1.93 or later, precisely detect `cfg!(debug_assertions)` for the `debug-if-debug` feature (ozpzrkur)

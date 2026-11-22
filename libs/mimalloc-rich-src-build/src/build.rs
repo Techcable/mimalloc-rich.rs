@@ -88,6 +88,7 @@ pub fn build(code: &VendoredSource, options: &Options, ctx: &CompilationContext)
         config.cflag("-DMI_VISIT_ABANDONED");
     }
     config.define("MI_BUILD_SHARED", "OFF"); // not necessary
+    config.define("MI_BUILD_TESTS", "OFF"); // avoid compiling mimalloc's own test programs
     config.define("MI_OVERRIDE", if override_malloc { "ON" } else { "OFF" });
     let resulting_build_dir = config.build();
     // TODO: Use pkg-config instead?
