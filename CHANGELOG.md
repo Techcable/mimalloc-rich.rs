@@ -12,6 +12,9 @@ Most changes include the relevant [jj](https://jj-vcs.dev) change ids in parens.
 
 ## Unreleased
 
+### Changes
+- Bump vendored sources to v3.7.1 and v2.5.4 (mukoxstu)
+
 ## v0.1.0-beta.2 - 2026-11-22
 Support heap visiting on all versions.
 
